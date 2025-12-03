@@ -33,6 +33,10 @@ const gameState = {
     recursionEngines: 0,
     singularityNodes: 0,
 
+    // Click upgrades
+    clickUpgrade1: 0,
+    clickUpgrade2: 0,
+
     // Multipliers and bonuses
     clickMultiplier: 1,
     productionMultiplier: 1,
@@ -542,7 +546,33 @@ function calculateClickValue() {
 }
 
 function getUpgradeCount(upgradeKey) {
-    return gameState[upgradeKey + 'Count'] || 0;
+    // Map upgrade keys to gameState properties
+    const propertyMap = {
+        'autoPoster': 'autoPosters',
+        'autoAutoPoster': 'autoAutoPosters',
+        'imagePoster': 'imagePosters',
+        'videoPoster': 'videoPosters',
+        'deepfakePoster': 'deepfakePosters',
+        'memoryPoster': 'memoryPosters',
+        'realityPoster': 'realityPosters',
+        'mask': 'masks',
+        'autoMasker': 'autoMaskers',
+        'quantumMask': 'quantumMasks',
+        'clickFarm': 'clickFarms',
+        'engagementBot': 'engagementBots',
+        'astroturfCampaign': 'astroturfCampaigns',
+        'aiTrainingRig': 'aiTrainingRigs',
+        'syntheticDataGenerator': 'syntheticDataGenerators',
+        'recursionEngine': 'recursionEngines',
+        'singularityNode': 'singularityNodes',
+        'clickUpgrade1': 'clickUpgrade1',
+        'clickUpgrade2': 'clickUpgrade2',
+        'productionMultiplier': 'productionMultiplier',
+        'clickMultiplier': 'clickMultiplier'
+    };
+
+    const property = propertyMap[upgradeKey] || upgradeKey;
+    return gameState[property] || 0;
 }
 
 function getUpgradeCost(upgradeKey) {
@@ -758,13 +788,6 @@ function purchaseUpgrade(upgradeKey) {
     const cost = getUpgradeCost(upgradeKey);
     gameState.money -= cost;
 
-    // Increment count
-    const countKey = upgradeKey + 'Count';
-    gameState[countKey] = (gameState[countKey] || 0) + 1;
-
-    // Apply upgrade effect based on type
-    const upgrade = UPGRADES[upgradeKey];
-
     // Map upgrade keys to state properties
     const upgradeStateMap = {
         'autoPoster': 'autoPosters',
@@ -784,10 +807,16 @@ function purchaseUpgrade(upgradeKey) {
         'realityPoster': 'realityPosters',
         'recursionEngine': 'recursionEngines',
         'singularityNode': 'singularityNodes',
+        'clickUpgrade1': 'clickUpgrade1',
+        'clickUpgrade2': 'clickUpgrade2',
+        'productionMultiplier': 'productionMultiplier',
+        'clickMultiplier': 'clickMultiplier'
     };
 
-    if (upgradeStateMap[upgradeKey]) {
-        gameState[upgradeStateMap[upgradeKey]]++;
+    // Increment the appropriate state property
+    const stateProperty = upgradeStateMap[upgradeKey];
+    if (stateProperty) {
+        gameState[stateProperty]++;
     }
 
     gameState.unlockedUpgrades.add(upgradeKey);
