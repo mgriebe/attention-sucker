@@ -2104,22 +2104,35 @@ function importSave() {
 }
 
 function resetGame() {
-    if (confirm('Are you sure you want to reset? All progress will be lost!')) {
-        if (confirm('Really? There is no undo!')) {
-            try {
-                // Check if player qualifies for leaderboard
-                checkLeaderboardEntry();
-            } catch (error) {
-                console.error('Leaderboard check failed:', error);
-            }
+    console.log('Reset game called');
 
-            // Remove save data
-            localStorage.removeItem('aiClickerSave');
-
-            // Force reload
-            window.location.href = window.location.href;
-        }
+    if (!confirm('Are you sure you want to reset? All progress will be lost!')) {
+        console.log('User cancelled first confirm');
+        return;
     }
+
+    if (!confirm('Really? There is no undo!')) {
+        console.log('User cancelled second confirm');
+        return;
+    }
+
+    console.log('Confirmed, proceeding with reset');
+
+    try {
+        // Check if player qualifies for leaderboard
+        checkLeaderboardEntry();
+    } catch (error) {
+        console.error('Leaderboard check failed:', error);
+    }
+
+    console.log('Removing save data');
+    localStorage.removeItem('aiClickerSave');
+
+    console.log('Reloading page');
+    // Try multiple reload methods
+    setTimeout(() => {
+        window.location.reload();
+    }, 100);
 }
 
 function checkLeaderboardEntry() {
