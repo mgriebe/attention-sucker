@@ -804,20 +804,13 @@ body.stage-13 {
         display: none;
     }
 
-    /* Header becomes the clickable area - below stats bar */
+    /* Header - below stats bar */
     header {
         margin-top: 35px;
         padding: 20px 15px;
         margin-bottom: 0;
-        cursor: pointer;
-        transition: all 0.2s;
         border-bottom: 3px solid var(--neon-blue);
         position: relative;
-    }
-
-    header:active {
-        transform: scale(0.98);
-        background: rgba(0, 245, 255, 0.1);
     }
 
     h1 {
@@ -829,20 +822,7 @@ body.stage-13 {
     .subtitle {
         font-size: 0.75em;
         line-height: 1.3;
-        margin-bottom: 10px;
-    }
-
-    header::after {
-        content: 'TAP TO POST AI CONTENT';
-        display: block;
-        margin-top: 10px;
-        padding: 10px;
-        font-size: 0.9em;
-        font-weight: bold;
-        color: var(--neon-yellow);
-        text-align: center;
-        text-shadow: 0 0 10px var(--neon-yellow);
-        border-top: 2px solid var(--neon-yellow);
+        margin-bottom: 0;
     }
 
     /* Adjust layout for stats bar */
@@ -852,11 +832,36 @@ body.stage-13 {
         gap: 0;
     }
 
-    /* Main area - keep it visible for bots */
+    /* Main area - keep it visible for bots and make it clickable */
     .main-area {
         order: 1;
         padding: 0;
         min-height: 300px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .main-area:active {
+        background: rgba(0, 255, 65, 0.05);
+    }
+
+    .main-area::before {
+        content: 'TAP TO POST AI CONTENT';
+        display: block;
+        padding: 20px 30px;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: var(--neon-yellow);
+        text-align: center;
+        text-shadow: 0 0 15px var(--neon-yellow);
+        border: 3px solid var(--neon-yellow);
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1;
         position: relative;
     }
 
