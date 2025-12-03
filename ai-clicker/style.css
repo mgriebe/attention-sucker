@@ -327,6 +327,14 @@ h1 {
     box-shadow: 0 0 10px var(--neon-green);
 }
 
+.bot-icon.imageposter {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, var(--neon-yellow), #ff9500);
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 10px var(--neon-yellow);
+}
+
 .bot-icon.auto-autoposter {
     width: 50px;
     height: 50px;
@@ -334,6 +342,38 @@ h1 {
     border: 3px solid var(--neon-pink);
     box-shadow: 0 0 15px var(--neon-pink);
     animation: float 4s ease-in-out infinite, pulse 2s ease-in-out infinite;
+}
+
+.bot-icon.masked::after {
+    content: '🎭';
+    position: absolute;
+    font-size: 0.6em;
+    top: -5px;
+    right: -5px;
+}
+
+.bot-icon.destroying {
+    animation: implode 0.8s ease-out forwards;
+}
+
+@keyframes implode {
+    0% {
+        transform: scale(1);
+        background: inherit;
+        opacity: 1;
+    }
+    30% {
+        background: #333;
+    }
+    70% {
+        transform: scale(0.3);
+        background: #000;
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
 }
 
 @keyframes float {

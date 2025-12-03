@@ -200,7 +200,7 @@ const UPGRADES = {
         description: "Disguises one AutoPoster from detection. Consumed when bot is busted.",
         baseCost: 50,
         costMultiplier: 1.1,
-        unlockThreshold: 200,
+        unlockThreshold: 1000,
         effect: (count) => count,
         type: "defense"
     },
@@ -703,10 +703,12 @@ function updateBotIcons() {
     const container = document.getElementById('bots-container');
     const targetAutoPosters = Math.floor(gameState.autoPosters);
     const targetAutoAutoPosters = Math.floor(gameState.autoAutoPosters);
+    const targetImagePosters = Math.floor(gameState.imagePosters);
 
-    // Count existing bots
-    const existingAutoPosters = container.querySelectorAll('.autoposter').length;
-    const existingAutoAutoPosters = container.querySelectorAll('.auto-autoposter').length;
+    // Count existing bots (excluding those being destroyed)
+    const existingAutoPosters = container.querySelectorAll('.autoposter:not(.destroying)').length;
+    const existingAutoAutoPosters = container.querySelectorAll('.auto-autoposter:not(.destroying)').length;
+    const existingImagePosters = container.querySelectorAll('.imageposter:not(.destroying)').length;
 
     // Add AutoPosters if needed
     if (targetAutoPosters > existingAutoPosters) {
@@ -716,12 +718,12 @@ function updateBotIcons() {
         }
     }
 
-    // Remove AutoPosters if needed (when busted)
+    // Remove AutoPosters if needed (when busted) - with animation
     if (targetAutoPosters < existingAutoPosters) {
         const toRemove = existingAutoPosters - targetAutoPosters;
-        const autoposters = container.querySelectorAll('.autoposter');
+        const autoposters = container.querySelectorAll('.autoposter:not(.destroying)');
         for (let i = 0; i < toRemove && i < autoposters.length; i++) {
-            autoposters[i].remove();
+            destroyBotIcon(autoposters[i]);
         }
     }
 
@@ -736,11 +738,58 @@ function updateBotIcons() {
     // Remove Auto-AutoPosters if needed
     if (targetAutoAutoPosters < existingAutoAutoPosters) {
         const toRemove = existingAutoAutoPosters - targetAutoAutoPosters;
-        const autoAutoPosters = container.querySelectorAll('.auto-autoposter');
+        const autoAutoPosters = container.querySelectorAll('.auto-autoposter:not(.destroying)');
         for (let i = 0; i < toRemove && i < autoAutoPosters.length; i++) {
             autoAutoPosters[i].remove();
         }
     }
+
+    // Add Image Posters if needed
+    if (targetImagePosters > existingImagePosters) {
+        const toAdd = Math.min(targetImagePosters - existingImagePosters, 5);
+        for (let i = 0; i < toAdd; i++) {
+            createBotIcon('imageposter');
+        }
+    }
+
+    // Remove Image Posters if needed
+    if (targetImagePosters < existingImagePosters) {
+        const toRemove = existingImagePosters - targetImagePosters;
+        const imagePosters = container.querySelectorAll('.imageposter:not(.destroying)');
+        for (let i = 0; i < toRemove && i < imagePosters.length; i++) {
+            imagePosters[i].remove();
+        }
+    }
+
+    // Update mask visual indicators
+    updateBotMasks();
+}
+
+function destroyBotIcon(bot) {
+    bot.classList.add('destroying');
+    // Remove after animation completes
+    setTimeout(() => {
+        bot.remove();
+    }, 800); // Match animation duration
+}
+
+function updateBotMasks() {
+    const container = document.getElementById('bots-container');
+    const autoposters = container.querySelectorAll('.autoposter:not(.destroying)');
+    const masksAvailable = gameState.masks;
+    const totalAutoPosters = autoposters.length;
+
+    // Calculate how many bots should be masked (proportional to masks available)
+    const maskedCount = Math.min(Math.floor(masksAvailable), totalAutoPosters);
+
+    // Apply masked class to first N bots
+    autoposters.forEach((bot, index) => {
+        if (index < maskedCount) {
+            bot.classList.add('masked');
+        } else {
+            bot.classList.remove('masked');
+        }
+    });
 }
 
 function createBotIcon(type) {
@@ -748,7 +797,7 @@ function createBotIcon(type) {
     const bot = document.createElement('div');
     bot.className = `bot-icon ${type}`;
 
-    // Random position within the container, avoiding the center button area
+    // Random position within the container, avoiding the center button area and top stats
     const containerRect = container.getBoundingClientRect();
     const centerX = containerRect.width / 2;
     const centerY = containerRect.height / 2;
@@ -756,7 +805,8 @@ function createBotIcon(type) {
     let x, y, distanceFromCenter;
     do {
         x = Math.random() * (containerRect.width - 60);
-        y = Math.random() * (containerRect.height - 60);
+        // Keep bots below the stats area (start at 150px from top)
+        y = 150 + Math.random() * (containerRect.height - 210);
         // Check if too close to center (where button is)
         distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
     } while (distanceFromCenter < 200); // Keep bots away from button
