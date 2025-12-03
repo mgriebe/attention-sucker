@@ -262,7 +262,10 @@ h1 {
     cursor: pointer;
     transition: all 0.1s ease;
     box-shadow: 0 0 30px var(--neon-pink), inset 0 0 30px rgba(255, 255, 255, 0.1);
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 10;
     user-select: none;
     -webkit-user-select: none;
@@ -271,12 +274,12 @@ h1 {
 }
 
 .click-button:hover {
-    transform: scale(1.05);
+    transform: translate(-50%, -50%) scale(1.05);
     box-shadow: 0 0 40px var(--neon-pink), inset 0 0 40px rgba(255, 255, 255, 0.2);
 }
 
 .click-button:active {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
     box-shadow: 0 0 20px var(--neon-pink), inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -314,25 +317,32 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2em;
     animation: float 3s ease-in-out infinite;
     pointer-events: none;
 }
 
+.bot-icon .material-symbols-outlined {
+    font-size: inherit;
+}
+
 .bot-icon.autoposter {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background: radial-gradient(circle, var(--neon-green), var(--neon-blue));
     border: 2px solid var(--neon-green);
     box-shadow: 0 0 10px var(--neon-green);
+    font-size: 24px;
+    color: white;
 }
 
 .bot-icon.imageposter {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background: radial-gradient(circle, var(--neon-yellow), #ff9500);
     border: 2px solid var(--neon-yellow);
     box-shadow: 0 0 10px var(--neon-yellow);
+    font-size: 24px;
+    color: white;
 }
 
 .bot-icon.auto-autoposter {
@@ -341,15 +351,38 @@ h1 {
     background: radial-gradient(circle, var(--neon-pink), var(--neon-purple));
     border: 3px solid var(--neon-pink);
     box-shadow: 0 0 15px var(--neon-pink);
-    animation: float 4s ease-in-out infinite, pulse 2s ease-in-out infinite;
+    animation: pulse 2s ease-in-out infinite;
+    font-size: 30px;
+    color: white;
 }
 
 .bot-icon.masked::after {
-    content: '🎭';
+    content: 'domino_mask';
+    font-family: 'Material Symbols Outlined';
     position: absolute;
-    font-size: 0.6em;
-    top: -5px;
-    right: -5px;
+    font-size: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bot-icon.infected {
+    animation: none !important;
+    opacity: 0.9;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.bot-icon.infected .material-symbols-outlined {
+    color: #000 !important;
+    font-size: 36px !important;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
 }
 
 .bot-icon.destroying {

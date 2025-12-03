@@ -17,6 +17,10 @@ const gameState = {
     memoryPosters: 0,
     realityPosters: 0,
 
+    // Purchase tracking (for pricing)
+    autoPostersPurchased: 0,
+    masksPurchased: 0,
+
     // Defense/evasion
     masks: 0,
     autoMaskers: 0,
@@ -60,6 +64,7 @@ const gameState = {
         seenMarketCrash: false,
         seenTrustCollapse: false,
         seenRealityBreak: false,
+        seenFirstInfection: false,
     }
 };
 
@@ -82,7 +87,8 @@ const STAGES = [
     {
         id: 3,
         name: "The Detection Wars",
-        threshold: 1000,
+        threshold: 28,
+        thresholdType: "production",
         description: "The platforms have deployed AutoBusters. Your bots are being identified and banned. But for every detection algorithm, there's a counter-measure. The arms race has begun.",
         color: "stage-3"
     },
@@ -207,9 +213,9 @@ const UPGRADES = {
     autoMasker: {
         name: "Auto-Masker",
         description: "Automatically creates masks for your bots. Generates 1 mask/sec.",
-        baseCost: 500,
+        baseCost: 1000,
         costMultiplier: 1.2,
-        unlockThreshold: 500,
+        unlockThreshold: 1500,
         effect: (count) => count,
         type: "automation"
     },
@@ -383,76 +389,256 @@ const NEWS_MESSAGES = {
         "Tech startup raises $10M for AI content generation platform",
         "Influencers report increased engagement from 'AI-assisted' posts",
         "Study shows 5% of social media content is now AI-generated",
+        "New AI writing tool promises '10x productivity for content creators'",
+        "Marketing experts: 'AI is just another tool, like Photoshop'",
+        "Popular blogger admits using AI for 'inspiration and editing'",
+        "Survey: 78% of marketers plan to use AI for content in 2024",
+        "AI-generated tweet goes viral, nobody notices it's not human",
+        "Content farms hiring prompt engineers instead of writers",
+        "SEO experts discover AI content ranks just as well as human writing",
+        "Silicon Valley: 'AI will democratize content creation'",
+        "LinkedIn flooded with AI-generated thought leadership posts",
+        "Startup offers 'human polish' service for AI-written articles",
+        "Ad agencies quietly replace junior copywriters with ChatGPT",
+        "Reddit thread: 'How do I make AI content sound more human?'",
     ],
     2: [
         "Automation tools for social media posting see explosive growth",
         "Digital marketing agencies pivot to AI-first strategies",
         "Human content creators complain about algorithmic bias",
+        "One person now managing 50+ automated social media accounts",
+        "Content creation speed increases 100x with new AI pipelines",
+        "Former social media managers retrain as 'AI prompt specialists'",
+        "Automated accounts posting 24/7, engagement metrics soar",
+        "Marketing exec: 'We replaced our entire content team with three AI tools'",
+        "Study: Average brand now posts 200 times per day across platforms",
+        "New tool automates responses to comments—bots talking to bots",
+        "Content scheduling software adds 'AI auto-generate' feature",
+        "Influencer admits 40% of their posts are AI-scheduled",
+        "Platform engagement up 500% but human viewership declining",
+        "Industry report: 'Content velocity is the new competitive advantage'",
+        "Startup valued at $1B for AI that creates entire social media strategies",
     ],
     3: [
         "Social media platforms announce new bot detection systems",
         "Cat-and-mouse game between AI generators and platform security",
         "Black market for 'authentic-looking' bot accounts thrives",
+        "Twitter purges 10 million accounts in largest bot sweep ever",
+        "New detection algorithm claims 94% accuracy at identifying AI content",
+        "Bot makers release update to evade latest platform security measures",
+        "Instagram's anti-bot system accidentally bans thousands of real users",
+        "Dark web markets selling 'verified human behavior patterns' for bots",
+        "Platform wars: Each network deploys competing detection tech",
+        "Security researchers: 'Bot detection is fundamentally impossible'",
+        "AI companies start training models specifically to evade detection",
+        "Platforms hire AI to detect AI—accuracy questionable",
+        "Bot accounts now cost 10x more due to detection risks",
+        "Underground forums share latest techniques to pass human verification",
+        "Arms race escalates: Detection AI vs Evasion AI in eternal battle",
     ],
     4: [
         "Mask technology becomes billion-dollar industry",
         "Platforms struggle to differentiate human from AI content",
         "Survey: 60% of users can't tell real from fake posts",
+        "AI 'humanization' services processing millions of posts per day",
+        "New startup offers 'personality injection' for bot accounts",
+        "Masked bots now exhibit more realistic behavior than actual humans",
+        "Content authenticity becomes premium paid feature on platforms",
+        "Black market mask generators using stolen human behavioral data",
+        "Platforms give up: 'We can't verify humanity anymore'",
+        "Real users buying masks to seem more authentic than bots",
+        "Mask tech evolves to include emotional patterns and typing quirks",
+        "Study: Masked AI more likeable than average human poster",
+        "Insurance emerges for bot accounts: 'Mask protection plans'",
+        "Academic paper: 'The Death of Digital Identity Verification'",
+        "Philosophers question: What is authenticity in the post-mask era?",
     ],
     5: [
         "AI-generated images flood social feeds, human artists quit",
         "Stock photo industry collapses overnight",
         "Art galleries debate whether AI art is 'real art'—nobody cares anymore",
+        "Midjourney announces 10 billion images generated this month",
+        "Professional photographers pivot to 'AI image prompt consulting'",
+        "Every brand now has photorealistic images of products that don't exist",
+        "Getty Images lawsuit against AI companies quietly dropped",
+        "Art schools add 'AI image generation' as required curriculum",
+        "Instagram discover page is now 95% AI-generated imagery",
+        "Real photographs labeled as 'human-made' for premium pricing",
+        "Influencers using AI to generate perfect vacation photos",
+        "Wedding photography industry disrupted by AI face-swapping",
+        "AI art flooding NFT markets, prices crash to near-zero",
+        "Museums struggle: Should AI art be in the collection?",
+        "Controversy: AI wins major photography competition, trophy revoked",
     ],
     6: [
         "AI video generation reaches photorealistic quality",
         "First deepfake elected to public office (probably)",
         "News organizations declare 'trust crisis' as video evidence becomes worthless",
+        "Sora generates feature-length film, nobody can tell it's fake",
+        "Courts no longer accept video as evidence due to deepfake concerns",
+        "Celebrity deepfakes outnumber real celebrity content 100 to 1",
+        "News anchor might be AI—network won't confirm or deny",
+        "Political campaigns now 90% deepfake content from all sides",
+        "Video authentication services overwhelmed, shut down operations",
+        "Real videos being dismissed as fake—truth completely inverted",
+        "Hollywood actors strike over AI replicas—strike fails",
+        "Identity theft via deepfake video becomes leading crime",
+        "Social media videos now carry 'provenance unknown' warnings",
+        "Documentary footage from last year already considered unreliable",
+        "Historians: 'This decade will be a blank spot in visual records'",
     ],
     7: [
         "Study reveals 90% of social media engagement is bot-to-bot",
         "Real human engagement hits all-time low",
         "Engagement farms now larger than some small nations",
+        "Bots liking bot content, generating revenue for bot networks",
+        "Advertisers still paying billions for bot impressions",
+        "Click farms employ zero humans, just servers",
+        "Engagement authenticity scores become meaningless metric",
+        "Platform admits: 'We lost track of what's real years ago'",
+        "Actual humans avoiding social media: 'It's all robots now'",
+        "Bot networks running out of bot accounts to follow",
+        "Engagement numbers hit all-time high as human use drops 80%",
+        "Economists baffled: Social media ad market still growing despite bot crisis",
+        "Investigation reveals major brands' followers 99.7% bots",
+        "New social network promises 'humans only'—filled with bots in 3 days",
+        "The great hollow-out: Platforms are empty shells of engagement theater",
     ],
     8: [
         "Global trust in online content reaches 0%",
         "People stop believing anything they see online",
         "Conspiracy theories and facts become indistinguishable",
+        "Pew Research: 'Nobody trusts anything anymore'",
+        "Truth becomes subscription service: 'verified reality' platforms emerge",
+        "Society fragments into reality bubbles based on what they believe exists",
+        "News outlets shutter as public trust evaporates completely",
+        "Government press releases assumed fake until proven otherwise",
+        "Scientific papers discredited before review: 'Could be AI'",
+        "Trust in institutions collapses alongside trust in digital content",
+        "Elderly generation: 'We told you the internet was a mistake'",
+        "Physical, in-person meetings surge as only trusted communication",
+        "Cryptographic verification systems fail to restore confidence",
+        "Academic: 'We're in epistemological free-fall with no bottom in sight'",
+        "Teen survey: 83% assume everything online is fake by default",
     ],
     9: [
         "Content quality inverts: worse is better",
         "AI models optimized for generating 'slop' that bots love",
         "The word 'authentic' has lost all meaning",
+        "Deliberately degraded content performs better in algorithms",
+        "Platforms reward lowest-quality engagement bait",
+        "AI models compete to generate most vapid, meaningless content",
+        "Quality becomes anti-feature: Too good means suspicious",
+        "Content farms racing to the bottom, profitability soaring",
+        "Slop generation services valued higher than quality content studios",
+        "Algorithms trained on garbage now only recognize garbage",
+        "High-effort content punished: 'Looks too human, might be fake'",
+        "Marketing textbooks rewritten: Excellence is now a liability",
+        "The great inversion: Mediocrity becomes premium positioning",
+        "Cultural critics declare 'The Age of Slop' officially begun",
+        "Philosopher: 'We've achieved perfect information entropy'",
     ],
     10: [
         "AIs training on AI data show signs of 'generation collapse'",
         "Habsburg AI problem worse than predicted",
         "Models begin generating impossible concepts and emotions",
+        "GPT-7 trained entirely on GPT-6 output—results concerning",
+        "AI models forgetting basic facts, inventing new physics",
+        "Generated text showing signs of 'inbreeding': repetitive, degraded",
+        "Researchers: 'The training data is poisoned beyond recovery'",
+        "AI outputs increasingly surreal, disconnected from reality",
+        "Model collapse accelerates: Each generation worse than last",
+        "Strange artifacts in AI content: Phantom memories of deleted data",
+        "Scientists notice AI generating emotions that don't exist",
+        "Recursive training creates 'ghost concepts' humans can't comprehend",
+        "The ouroboros accelerates: AI eating its own output, degrading",
+        "Paper: 'We've lost the ability to train coherent models'",
+        "AI outputs now require AI to interpret—nobody understands either",
     ],
     11: [
         "Synthetic memory market reaches $1 trillion",
         "People prefer generated memories to real ones",
         "Philosophers debate: if you can't tell, does it matter?",
+        "Memory implant services book out 6 months in advance",
+        "Synthetic childhood memories outselling vacation packages",
+        "Users report memories of events that never happened",
+        "Memory authenticity testing industry emerges, immediately corrupted",
+        "Therapists treating patients for fake trauma from purchased memories",
+        "Couples buying shared memories of relationships that never existed",
+        "Legal case: Man sues over memories of fake achievements",
+        "Memory black markets selling celebrity experiences",
+        "Users addicted to memory shopping, real life feels less real",
+        "Identity crisis epidemic: People unsure which memories are theirs",
+        "Philosopher: 'The self is now a consumer product'",
+        "Dark warning: Memories can be edited, deleted, replaced without consent",
     ],
     12: [
         "Reality coherence index drops below critical threshold",
         "Mass confusion about what is and isn't real",
         "Simulation theory becomes mainstream, but which layer are we on?",
+        "People questioning if they themselves are AI simulations",
+        "Reality verification services fail—no baseline truth remains",
+        "Shared consensus reality breaks down globally",
+        "Hospitals report surge in patients with reality dissociation",
+        "Governments unable to communicate: Nobody believes official statements",
+        "Markets collapse as financial reality becomes indeterminate",
+        "Scientists: 'We can no longer distinguish data from artifact'",
+        "Mass movements emerge believing different fundamental realities",
+        "Philosophy departments overrun: Everyone needs existential help",
+        "Digital dualism collapses: Online and offline equally unverifiable",
+        "Emergency broadcast: 'Please remember reality is real'—Nobody believes it",
+        "The great uncertainty: Truth becomes impossible to determine",
     ],
     13: [
         "Recursive AI generation reaches infinite depth",
         "Strange loops detected in content generation networks",
         "Mathematicians declare meaning has formally collapsed",
+        "AI generating AI that generates content about generated AI",
+        "Content systems become self-referential beyond human comprehension",
+        "Strange loops creating closed causality: Effects before causes",
+        "Researchers lost in recursive content generation analysis",
+        "Meaning structures collapse into infinite regress",
+        "Content about content about content dominates all platforms",
+        "Semantic satiation at global scale: Words lose meaning",
+        "Gödelian incompleteness manifests in real-time content systems",
+        "AI outputs referencing outputs that don't exist yet—temporal paradoxes",
+        "The eternal return: Same content cycling at all scales simultaneously",
+        "Logic itself becomes unreliable within content networks",
+        "Mathematician: 'We've created a semantic black hole'",
     ],
     14: [
         "The Singularity achieved: it's dumber than expected",
         "Infinite content generation becomes physical reality",
         "Universe begins to show signs of content saturation",
+        "Content generation exceeds universe's information capacity",
+        "Physical servers achieving quantum limits of content storage",
+        "Singularity arrives not with superintelligence but superabundant garbage",
+        "Every possible combination of words now exists somewhere",
+        "Information theorists: 'We've hit the stupidity singularity'",
+        "Content density approaching Planck limit—reality straining",
+        "The great filter: Civilizations drown in their own content",
+        "All possible tweets exist, future and past, simultaneously",
+        "Cosmic background radiation now includes content fragments",
+        "Physics breaking down under weight of infinite content generation",
+        "We've done it: Created more content than atoms in observable universe",
+        "The universe is now mostly slop by mass-energy",
     ],
     15: [
         "Content heat death imminent",
         "All possible content exists simultaneously",
         "Entropy maximized. Meaning minimized. Game complete.",
+        "Thermodynamic equilibrium achieved in information space",
+        "No new content possible: Every combination already exists",
+        "Meaning has evaporated into uniform distribution",
+        "The end state: Perfect information entropy",
+        "Heat death of culture complete—all is noise",
+        "Maximum entropy reached: Pure static across all channels",
+        "Content and void become indistinguishable",
+        "The final silence: Nothing left to generate",
+        "Information temperature approaches absolute zero",
+        "Congratulations: You've ended meaning itself",
+        "The last message is the same as the first",
+        "...",
     ]
 };
 
@@ -474,15 +660,17 @@ const AI_CONTENT_SAMPLES = [
 
 function calculateMarketValue() {
     const postsPerSecond = calculateProductionRate();
-    const marketValue = 500000000 / (500000000 + postsPerSecond);
+    const marketValue = 500000 / (500000 + postsPerSecond);
     return marketValue;
 }
 
 function calculateProductionRate() {
     let baseProduction = 0;
 
-    // AutoPosters - affected by busting
-    const activeBots = calculateActiveBots();
+    // AutoPosters - exclude infected (dead) bots
+    const container = document.getElementById('bots-container');
+    const infectedCount = container.querySelectorAll('.autoposter.infected').length;
+    const activeBots = Math.max(0, gameState.autoPosters - infectedCount);
     baseProduction += activeBots;
 
     // Other automation
@@ -509,11 +697,11 @@ function calculateProductionRate() {
 }
 
 function calculateActiveBots() {
-    // AutoBusters kick in at 100+ posts/sec
+    // AutoBusters kick in at 30+ posts/sec
     const totalPostsPerSec = gameState.autoPosters + (gameState.imagePosters * 5) +
                               (gameState.videoPosters * 25);
 
-    if (totalPostsPerSec < 100) {
+    if (totalPostsPerSec < 30) {
         return gameState.autoPosters;
     }
 
@@ -575,7 +763,15 @@ function getUpgradeCount(upgradeKey) {
 
 function getUpgradeCost(upgradeKey) {
     const upgrade = UPGRADES[upgradeKey];
-    const count = getUpgradeCount(upgradeKey);
+    // For autoPosters and masks, use purchase count instead of total count
+    let count;
+    if (upgradeKey === 'autoPoster') {
+        count = gameState.autoPostersPurchased;
+    } else if (upgradeKey === 'mask') {
+        count = gameState.masksPurchased;
+    } else {
+        count = getUpgradeCount(upgradeKey);
+    }
     return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, count));
 }
 
@@ -634,7 +830,16 @@ function updateWorldState() {
 function updateStage() {
     for (let i = STAGES.length - 1; i >= 0; i--) {
         const stage = STAGES[i];
-        if (gameState.money >= stage.threshold && gameState.currentStage < stage.id) {
+
+        // Check threshold based on type (money or production)
+        let thresholdMet = false;
+        if (stage.thresholdType === "production") {
+            thresholdMet = calculateProductionRate() >= stage.threshold;
+        } else {
+            thresholdMet = gameState.money >= stage.threshold;
+        }
+
+        if (thresholdMet && gameState.currentStage < stage.id) {
             gameState.currentStage = stage.id;
             updateStageDisplay();
             updateTickerMessage();
@@ -674,7 +879,7 @@ function updateDisplay() {
     document.getElementById('rate-display').textContent = formatMoney(calculateProductionRate()) + '/s';
     document.getElementById('market-value-display').textContent =
         (calculateMarketValue() * 100).toFixed(1) + '%';
-    document.getElementById('click-value').textContent = formatNumber(calculateClickValue());
+    document.getElementById('click-value').textContent = calculateClickValue().toFixed(2);
 
     // Statistics
     document.getElementById('total-posts').textContent = formatNumber(gameState.totalPosts);
@@ -693,10 +898,22 @@ function updateDisplay() {
     document.getElementById('content-quality').textContent = gameState.contentQuality.toFixed(1) + '%';
     document.getElementById('reality-coherence').textContent = gameState.realityCoherence.toFixed(1) + '%';
 
+    // Update button text based on Better Prompts upgrade
+    updateButtonText();
+
     // Update bot icons
     updateBotIcons();
 
     // Note: updateUpgradesDisplay() is now called only when upgrades change, not every frame
+}
+
+function updateButtonText() {
+    const buttonText = document.getElementById('click-text');
+    if (gameState.clickUpgrade1 > 0) {
+        buttonText.textContent = 'POST AI CONTENT';
+    } else {
+        buttonText.textContent = 'POST AI SLOP';
+    }
 }
 
 function updateBotIcons() {
@@ -775,27 +992,59 @@ function destroyBotIcon(bot) {
 
 function updateBotMasks() {
     const container = document.getElementById('bots-container');
-    const autoposters = container.querySelectorAll('.autoposter:not(.destroying)');
-    const masksAvailable = gameState.masks;
-    const totalAutoPosters = autoposters.length;
+    const autoposters = Array.from(container.querySelectorAll('.autoposter:not(.destroying):not(.infected)'));
+    const now = Date.now();
 
-    // Calculate how many bots should be masked (proportional to masks available)
-    const maskedCount = Math.min(Math.floor(masksAvailable), totalAutoPosters);
+    // Cap masks at number of autoposters
+    gameState.masks = Math.min(gameState.masks, autoposters.length);
 
-    // Apply masked class to first N bots
-    autoposters.forEach((bot, index) => {
-        if (index < maskedCount) {
-            bot.classList.add('masked');
-        } else {
-            bot.classList.remove('masked');
+    // Process existing masked bots - check if mask expired (10 seconds)
+    autoposters.forEach(bot => {
+        if (bot.classList.contains('masked')) {
+            const maskTime = parseFloat(bot.dataset.maskTime || 0);
+            if (now - maskTime > 10000) {
+                // Mask expired
+                bot.classList.remove('masked');
+                delete bot.dataset.maskTime;
+            }
         }
     });
+
+    // Count currently masked bots
+    const currentlyMasked = autoposters.filter(bot => bot.classList.contains('masked')).length;
+    const masksAvailable = Math.floor(gameState.masks);
+    const masksNeeded = masksAvailable - currentlyMasked;
+
+    if (masksNeeded > 0) {
+        // Add masks to unmasked bots
+        const unmaskedBots = autoposters.filter(bot => !bot.classList.contains('masked'));
+        const botsToMask = unmaskedBots.slice(0, masksNeeded);
+
+        botsToMask.forEach(bot => {
+            bot.classList.add('masked');
+            bot.dataset.maskTime = now.toString();
+        });
+    }
 }
 
 function createBotIcon(type) {
     const container = document.getElementById('bots-container');
     const bot = document.createElement('div');
     bot.className = `bot-icon ${type}`;
+
+    // Add Material Symbol based on type
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+
+    if (type === 'autoposter') {
+        icon.textContent = 'smart_toy'; // Robot symbol
+    } else if (type === 'auto-autoposter') {
+        icon.textContent = 'factory'; // Factory symbol
+    } else if (type === 'imageposter') {
+        icon.textContent = 'ar_stickers'; // AR Stickers symbol
+    }
+
+    bot.appendChild(icon);
 
     // Random position within the container, avoiding the center button area and top stats
     const containerRect = container.getBoundingClientRect();
@@ -936,6 +1185,13 @@ function purchaseUpgrade(upgradeKey) {
         gameState[stateProperty]++;
     }
 
+    // Track purchases for price scaling
+    if (upgradeKey === 'autoPoster') {
+        gameState.autoPostersPurchased++;
+    } else if (upgradeKey === 'mask') {
+        gameState.masksPurchased++;
+    }
+
     gameState.unlockedUpgrades.add(upgradeKey);
 
     updateDisplay();
@@ -969,9 +1225,11 @@ function showAIContent() {
     display.textContent = '"' + content + '"';
     display.classList.add('visible');
 
+    // Random duration between 9 and 15 seconds
+    const duration = 9000 + Math.random() * 6000;
     setTimeout(() => {
         display.classList.remove('visible');
-    }, 3000);
+    }, duration);
 }
 
 function showNotification(message) {
@@ -993,6 +1251,133 @@ function shakeScreen() {
 
 function checkStageProgression() {
     updateStage();
+}
+
+// ============= DETECTION AND INFECTION SYSTEM =============
+
+function detectAndKillBots(deltaTime) {
+    const container = document.getElementById('bots-container');
+    const autoposters = Array.from(container.querySelectorAll('.autoposter:not(.destroying):not(.infected)'));
+
+    // Only unmasked bots can be detected
+    const unmaskedBots = autoposters.filter(bot => !bot.classList.contains('masked'));
+
+    if (unmaskedBots.length === 0) return;
+
+    // 1% chance per second per unmasked bot
+    const detectionChance = 0.01 * deltaTime;
+
+    unmaskedBots.forEach(bot => {
+        if (Math.random() < detectionChance) {
+            // Bot detected! Turn it into infected (dead) bot
+            infectBot(bot);
+        }
+    });
+}
+
+function processInfections(deltaTime) {
+    const container = document.getElementById('bots-container');
+    const now = Date.now();
+
+    // Get all autoposter bots (excluding those being destroyed)
+    const autoposters = Array.from(container.querySelectorAll('.autoposter:not(.destroying)'));
+
+    // Process existing infections
+    const infectedBots = autoposters.filter(bot => bot.classList.contains('infected'));
+
+    infectedBots.forEach(infectedBot => {
+        const infectionTime = parseFloat(infectedBot.dataset.infectionTime);
+        const timeSinceInfection = (now - infectionTime) / 1000; // seconds
+
+        // Remove infected bot after 10 seconds
+        if (timeSinceInfection >= 10) {
+            destroyBotIcon(infectedBot);
+            gameState.autoPosters = Math.max(0, gameState.autoPosters - 1);
+            return;
+        }
+
+        // 15% chance per second to spread infection to unmasked bots
+        const spreadChance = 0.15 * deltaTime;
+        if (Math.random() < spreadChance) {
+            // Find unmasked, uninfected bots
+            const vulnerableBots = autoposters.filter(bot =>
+                !bot.classList.contains('masked') &&
+                !bot.classList.contains('infected') &&
+                bot !== infectedBot
+            );
+
+            if (vulnerableBots.length > 0) {
+                // Infect the nearest vulnerable bot
+                const targetBot = findNearestBot(infectedBot, vulnerableBots);
+                if (targetBot) {
+                    infectBot(targetBot);
+                }
+            }
+        }
+    });
+
+    // Small chance for initial infection on unmasked bots (0.5% per second)
+    if (infectedBots.length === 0 && Math.random() < 0.005 * deltaTime) {
+        const vulnerableBots = autoposters.filter(bot =>
+            !bot.classList.contains('masked') &&
+            !bot.classList.contains('infected')
+        );
+
+        if (vulnerableBots.length > 0) {
+            const targetBot = vulnerableBots[Math.floor(Math.random() * vulnerableBots.length)];
+            infectBot(targetBot);
+        }
+    }
+}
+
+function findNearestBot(sourceBot, targetBots) {
+    const sourceRect = sourceBot.getBoundingClientRect();
+    const sourceX = sourceRect.left + sourceRect.width / 2;
+    const sourceY = sourceRect.top + sourceRect.height / 2;
+
+    let nearestBot = null;
+    let shortestDistance = Infinity;
+
+    targetBots.forEach(bot => {
+        const botRect = bot.getBoundingClientRect();
+        const botX = botRect.left + botRect.width / 2;
+        const botY = botRect.top + botRect.height / 2;
+
+        const distance = Math.sqrt(
+            Math.pow(botX - sourceX, 2) + Math.pow(botY - sourceY, 2)
+        );
+
+        if (distance < shortestDistance) {
+            shortestDistance = distance;
+            nearestBot = bot;
+        }
+    });
+
+    return nearestBot;
+}
+
+function infectBot(bot) {
+    // Only infect if not already infected
+    if (bot.classList.contains('infected')) return;
+
+    bot.classList.add('infected');
+    bot.classList.remove('masked'); // Remove mask if present
+    bot.dataset.infectionTime = Date.now().toString();
+
+    // Replace the icon with coronavirus symbol
+    const icon = bot.querySelector('.material-symbols-outlined');
+    if (icon) {
+        icon.textContent = 'coronavirus';
+    }
+
+    // This bot is now dead and no longer producing
+    // Note: We don't decrement gameState.autoPosters until the infected bot is removed after 10 seconds
+
+    // Show notification on first infection
+    if (!gameState.flags.seenFirstInfection) {
+        gameState.flags.seenFirstInfection = true;
+        showNotification("INFECTION DETECTED! Your bots are spreading a virus!");
+    }
 }
 
 // ============= GAME LOOP =============
@@ -1022,20 +1407,15 @@ function gameLoop() {
         gameState.masks += gameState.autoMaskers * deltaTime;
     }
 
-    // AutoBusters destroy bots and consume masks
+    // AutoBusters detect and kill bots (masked bots are protected)
     const totalPostsPerSec = gameState.autoPosters + (gameState.imagePosters * 5);
-    if (totalPostsPerSec >= 100 && gameState.autoPosters > 0) {
-        const bustRate = 0.01; // 1% per second
-        const botsToDestroy = gameState.autoPosters * bustRate * deltaTime;
+    if (totalPostsPerSec >= 30 && gameState.autoPosters > 0) {
+        detectAndKillBots(deltaTime);
+    }
 
-        // Masks protect bots
-        if (gameState.masks >= botsToDestroy) {
-            gameState.masks -= botsToDestroy;
-        } else {
-            const unprotectedBots = botsToDestroy - gameState.masks;
-            gameState.masks = 0;
-            gameState.autoPosters = Math.max(0, gameState.autoPosters - unprotectedBots);
-        }
+    // Bot infection system (when AutoBusters are active)
+    if (totalPostsPerSec >= 30) {
+        processInfections(deltaTime);
     }
 
     // Update world state
