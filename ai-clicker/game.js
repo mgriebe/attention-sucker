@@ -1,4 +1,4 @@
-// AI Clicker - The Content Apocalypse
+// Attention Sucker
 // A dystopian incremental game about AI content pollution
 
 // ============= GAME STATE =============
@@ -736,9 +736,8 @@ function updateUpgradesDisplay() {
 function updateStageDisplay() {
     const stage = STAGES.find(s => s.id === gameState.currentStage);
     if (stage) {
-        document.getElementById('current-stage').textContent =
-            `${stage.id} - ${stage.name}`;
-        document.getElementById('stage-description').textContent = stage.description;
+        // Update the stage text in the header banner
+        document.getElementById('stage-text').textContent = stage.description;
     }
 }
 
@@ -750,16 +749,10 @@ function updateTickerMessage() {
 }
 
 function updateBodyClass() {
+    // Remove all stage classes first
     document.body.className = '';
-    if (gameState.currentStage >= 7) {
-        document.body.classList.add('stage-7');
-    }
-    if (gameState.currentStage >= 10) {
-        document.body.classList.add('stage-10');
-    }
-    if (gameState.currentStage >= 13) {
-        document.body.classList.add('stage-13');
-    }
+    // Add current stage class for background color
+    document.body.classList.add(`stage-${gameState.currentStage}`);
 }
 
 // ============= GAME ACTIONS =============
@@ -1092,7 +1085,7 @@ function initializeEventListeners() {
 // ============= INITIALIZATION =============
 
 function initGame() {
-    console.log('AI Clicker: The Content Apocalypse');
+    console.log('Attention Sucker');
     console.log('A dystopian incremental game about AI content pollution');
 
     // Ensure unlockedUpgrades is always a Set
