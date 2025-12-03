@@ -235,6 +235,90 @@
             color: rgba(255, 255, 255, 0.6);
             font-style: italic;
         }
+
+        /* Mobile responsiveness for About page */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+
+            p, li {
+                font-size: 1em;
+            }
+
+            .button {
+                display: block;
+                margin: 15px 0;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .leaderboard-table {
+                font-size: 0.75em;
+            }
+
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 6px 4px;
+            }
+
+            /* Hide some columns on mobile to fit */
+            .leaderboard-table th:nth-child(4),
+            .leaderboard-table td:nth-child(4),
+            .leaderboard-table th:nth-child(6),
+            .leaderboard-table td:nth-child(6),
+            .leaderboard-table th:nth-child(9),
+            .leaderboard-table td:nth-child(9),
+            .leaderboard-table th:nth-child(10),
+            .leaderboard-table td:nth-child(10),
+            .leaderboard-table th:nth-child(11),
+            .leaderboard-table td:nth-child(11) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .leaderboard-table {
+                font-size: 0.7em;
+            }
+
+            /* Show even fewer columns on very small screens */
+            .leaderboard-table th:nth-child(5),
+            .leaderboard-table td:nth-child(5),
+            .leaderboard-table th:nth-child(8),
+            .leaderboard-table td:nth-child(8) {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
