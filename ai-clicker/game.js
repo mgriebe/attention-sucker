@@ -1589,9 +1589,21 @@ function createBotIcon(type) {
     // Random position within the container, avoiding the center button area and top stats
     const containerRect = container.getBoundingClientRect();
 
-    // Use window dimensions if container dimensions are not available (mobile layout issue)
-    const containerWidth = containerRect.width > 0 ? containerRect.width : window.innerWidth;
-    const containerHeight = containerRect.height > 0 ? containerRect.height : 300;
+    // Use parent main-area dimensions on mobile, or fallback to window dimensions
+    let containerWidth = containerRect.width;
+    let containerHeight = containerRect.height;
+
+    if (containerWidth === 0 || containerHeight === 0) {
+        const mainArea = container.parentElement;
+        if (mainArea) {
+            const mainRect = mainArea.getBoundingClientRect();
+            containerWidth = mainRect.width > 0 ? mainRect.width : window.innerWidth;
+            containerHeight = mainRect.height > 0 ? mainRect.height : 300;
+        } else {
+            containerWidth = window.innerWidth;
+            containerHeight = 300;
+        }
+    }
 
     const centerX = containerWidth / 2;
     const centerY = containerHeight / 2;
