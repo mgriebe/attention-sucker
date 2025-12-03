@@ -1588,14 +1588,20 @@ function createBotIcon(type) {
 
     // Random position within the container, avoiding the center button area and top stats
     const containerRect = container.getBoundingClientRect();
-    const centerX = containerRect.width / 2;
-    const centerY = containerRect.height / 2;
+
+    // Use window dimensions if container dimensions are not available (mobile layout issue)
+    const containerWidth = containerRect.width > 0 ? containerRect.width : window.innerWidth;
+    const containerHeight = containerRect.height > 0 ? containerRect.height : 300;
+
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
 
     let x, y, distanceFromCenter;
     do {
-        x = Math.random() * (containerRect.width - 60);
-        // Keep bots below the stats area (start at 150px from top)
-        y = 150 + Math.random() * (containerRect.height - 210);
+        x = Math.random() * (containerWidth - 60);
+        // Keep bots below the stats area (start at 50px from top on mobile)
+        const topOffset = window.innerWidth <= 768 ? 50 : 150;
+        y = topOffset + Math.random() * (containerHeight - topOffset - 60);
         // Check if too close to center (where button is)
         distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
     } while (distanceFromCenter < 200); // Keep bots away from button

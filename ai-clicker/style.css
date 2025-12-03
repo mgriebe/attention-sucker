@@ -814,14 +814,15 @@ body.stage-13 {
     }
 
     h1 {
-        font-size: 1.5em;
-        margin-bottom: 8px;
+        font-size: 2em;
+        margin-bottom: 5px;
+        letter-spacing: 2px;
     }
 
     /* Keep subtitle visible - it's the story! */
     .subtitle {
-        font-size: 0.75em;
-        line-height: 1.3;
+        font-size: 0.9em;
+        line-height: 1.2;
         margin-bottom: 0;
     }
 
