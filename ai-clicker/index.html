@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Clicker: The Content Apocalypse</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header -->
+        <header>
+            <h1 class="glitch" data-text="AI CLICKER">AI CLICKER</h1>
+            <div class="subtitle">The Content Apocalypse</div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div class="game-layout">
+            <!-- Left Sidebar - Upgrades -->
+            <aside class="sidebar left-sidebar">
+                <h2>Upgrades</h2>
+                <div id="upgrades-container" class="upgrades-list"></div>
+            </aside>
+
+            <!-- Center - Main Action Area -->
+            <main class="main-area">
+                <div class="stats-display">
+                    <div class="stat-item main-stat">
+                        <span class="stat-label">Money:</span>
+                        <span id="money-display" class="stat-value">$0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">$/second:</span>
+                        <span id="rate-display" class="stat-value">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Market Value:</span>
+                        <span id="market-value-display" class="stat-value">100%</span>
+                    </div>
+                </div>
+
+                <div id="click-area" class="click-button">
+                    <div class="click-text">POST AI CONTENT</div>
+                    <div class="click-subtext">Click to earn $<span id="click-value">1</span></div>
+                </div>
+
+                <div id="particles-container"></div>
+
+                <div class="stage-display">
+                    <div class="stage-title">Stage: <span id="current-stage">1 - The Gold Rush</span></div>
+                    <div class="stage-description" id="stage-description">
+                        You've discovered that AI can generate content for free. Why write tweets yourself when a bot can do it? The engagement is real, and so is the money. This feels like the future.
+                    </div>
+                </div>
+
+                <div id="ai-content-display" class="ai-content-showcase"></div>
+            </main>
+
+            <!-- Right Sidebar - Stats -->
+            <aside class="sidebar right-sidebar">
+                <h2>Statistics</h2>
+                <div id="stats-container" class="stats-list">
+                    <div class="stat-group">
+                        <h3>Production</h3>
+                        <div class="stat-line">
+                            <span>Total Posts:</span>
+                            <span id="total-posts">0</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Posts/sec:</span>
+                            <span id="posts-per-sec">0</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Clicks:</span>
+                            <span id="total-clicks">0</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-group">
+                        <h3>Automation</h3>
+                        <div class="stat-line">
+                            <span>AutoPosters:</span>
+                            <span id="autoposters-count">0</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Masks:</span>
+                            <span id="masks-count">0</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Survival Rate:</span>
+                            <span id="survival-rate">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-group">
+                        <h3>The World</h3>
+                        <div class="stat-line">
+                            <span>Human Trust:</span>
+                            <span id="human-trust">100%</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Content Quality:</span>
+                            <span id="content-quality">100%</span>
+                        </div>
+                        <div class="stat-line">
+                            <span>Reality Coherence:</span>
+                            <span id="reality-coherence">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-group">
+                        <h3>Game Control</h3>
+                        <button id="save-btn" class="control-btn">Save Game</button>
+                        <button id="export-btn" class="control-btn">Export Save</button>
+                        <button id="import-btn" class="control-btn">Import Save</button>
+                        <button id="reset-btn" class="control-btn danger">Reset Game</button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Ticker -->
+        <footer class="news-ticker">
+            <div class="ticker-label">NEWS:</div>
+            <div class="ticker-content">
+                <span id="ticker-text">Welcome to the AI content revolution! Click to get started...</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Import -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <h2>Import Save</h2>
+            <textarea id="import-text" placeholder="Paste your save data here..."></textarea>
+            <div class="modal-buttons">
+                <button id="import-confirm-btn" class="control-btn">Import</button>
+                <button id="import-cancel-btn" class="control-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
