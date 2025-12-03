@@ -724,7 +724,6 @@ function updateUpgradesDisplay() {
         `;
 
         upgradeDiv.addEventListener('click', () => {
-            console.log('Clicked upgrade:', key, 'Can afford:', canAfford, 'Maxed:', maxed);
             if (!maxed) {
                 purchaseUpgrade(key);
             }
@@ -784,21 +783,10 @@ function handleClick() {
 }
 
 function purchaseUpgrade(upgradeKey) {
-    console.log('purchaseUpgrade called for:', upgradeKey);
-    console.log('Current money:', gameState.money);
-    console.log('Cost:', getUpgradeCost(upgradeKey));
-    console.log('Can afford:', canAffordUpgrade(upgradeKey));
-    console.log('Is maxed:', isUpgradeMaxed(upgradeKey));
+    if (!canAffordUpgrade(upgradeKey) || isUpgradeMaxed(upgradeKey)) return;
 
-    if (!canAffordUpgrade(upgradeKey) || isUpgradeMaxed(upgradeKey)) {
-        console.log('Purchase blocked');
-        return;
-    }
-
-    console.log('Purchase proceeding...');
     const cost = getUpgradeCost(upgradeKey);
     gameState.money -= cost;
-    console.log('Money after purchase:', gameState.money);
 
     // Map upgrade keys to state properties
     const upgradeStateMap = {
@@ -1038,21 +1026,11 @@ function importSave() {
 }
 
 function resetGame() {
-    console.log('Reset button clicked');
     if (confirm('Are you sure you want to reset? All progress will be lost!')) {
-        console.log('First confirm accepted');
         if (confirm('Really? There is no undo!')) {
-            console.log('Second confirm accepted, resetting...');
             localStorage.removeItem('aiClickerSave');
-            console.log('LocalStorage cleared');
-            console.log('Reloading page...');
-            // Force a hard reload
             window.location.reload(true);
-        } else {
-            console.log('Second confirm cancelled');
         }
-    } else {
-        console.log('First confirm cancelled');
     }
 }
 
