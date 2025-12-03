@@ -758,6 +758,15 @@ body.stage-13 {
         min-height: 100vh;
     }
 
+    /* Disable text selection on mobile */
+    * {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
     /* Header becomes the clickable area */
     header {
         padding: 20px 15px;
