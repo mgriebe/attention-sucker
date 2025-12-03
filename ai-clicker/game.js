@@ -2185,6 +2185,12 @@ function initializeEventListeners() {
     // Click button
     document.getElementById('click-area').addEventListener('click', handleClick);
 
+    // Mobile: Make header clickable on mobile devices
+    const header = document.querySelector('header');
+    if (header && window.innerWidth <= 768) {
+        header.addEventListener('click', handleClick);
+    }
+
     // Control buttons
     document.getElementById('save-btn').addEventListener('click', () => {
         saveGame();
