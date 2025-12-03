@@ -693,8 +693,7 @@ function updateDisplay() {
     document.getElementById('content-quality').textContent = gameState.contentQuality.toFixed(1) + '%';
     document.getElementById('reality-coherence').textContent = gameState.realityCoherence.toFixed(1) + '%';
 
-    // Update upgrades
-    updateUpgradesDisplay();
+    // Note: updateUpgradesDisplay() is now called only when upgrades change, not every frame
 }
 
 function updateUpgradesDisplay() {
@@ -724,9 +723,12 @@ function updateUpgradesDisplay() {
             </div>
         `;
 
-        if (!maxed) {
-            upgradeDiv.addEventListener('click', () => purchaseUpgrade(key));
-        }
+        upgradeDiv.addEventListener('click', () => {
+            console.log('Clicked upgrade:', key, 'Can afford:', canAfford, 'Maxed:', maxed);
+            if (!maxed) {
+                purchaseUpgrade(key);
+            }
+        });
 
         container.appendChild(upgradeDiv);
     }
@@ -777,14 +779,26 @@ function handleClick() {
     }
 
     updateDisplay();
+    updateUpgradesDisplay(); // Update after click to show affordability changes
     checkStageProgression();
 }
 
 function purchaseUpgrade(upgradeKey) {
-    if (!canAffordUpgrade(upgradeKey) || isUpgradeMaxed(upgradeKey)) return;
+    console.log('purchaseUpgrade called for:', upgradeKey);
+    console.log('Current money:', gameState.money);
+    console.log('Cost:', getUpgradeCost(upgradeKey));
+    console.log('Can afford:', canAffordUpgrade(upgradeKey));
+    console.log('Is maxed:', isUpgradeMaxed(upgradeKey));
 
+    if (!canAffordUpgrade(upgradeKey) || isUpgradeMaxed(upgradeKey)) {
+        console.log('Purchase blocked');
+        return;
+    }
+
+    console.log('Purchase proceeding...');
     const cost = getUpgradeCost(upgradeKey);
     gameState.money -= cost;
+    console.log('Money after purchase:', gameState.money);
 
     // Map upgrade keys to state properties
     const upgradeStateMap = {
@@ -820,6 +834,7 @@ function purchaseUpgrade(upgradeKey) {
     gameState.unlockedUpgrades.add(upgradeKey);
 
     updateDisplay();
+    updateUpgradesDisplay(); // Refresh upgrades after purchase
     saveGame();
 }
 
@@ -878,6 +893,7 @@ function checkStageProgression() {
 // ============= GAME LOOP =============
 
 let lastLoopTime = Date.now();
+let lastUpgradeUpdate = Date.now();
 
 function gameLoop() {
     const now = Date.now();
@@ -922,6 +938,12 @@ function gameLoop() {
 
     // Update display
     updateDisplay();
+
+    // Update upgrades display occasionally (every 500ms) to show affordability changes from passive income
+    if (now - lastUpgradeUpdate > 500) {
+        updateUpgradesDisplay();
+        lastUpgradeUpdate = now;
+    }
 
     // Continue loop
     requestAnimationFrame(gameLoop);
@@ -1016,8 +1038,11 @@ function importSave() {
 }
 
 function resetGame() {
+    console.log('Reset button clicked');
     if (confirm('Are you sure you want to reset? All progress will be lost!')) {
+        console.log('First confirm accepted');
         if (confirm('Really? There is no undo!')) {
+            console.log('Second confirm accepted, resetting...');
             localStorage.removeItem('aiClickerSave');
             location.reload();
         }
@@ -1098,6 +1123,9 @@ function initGame() {
         updateDisplay();
         updateStageDisplay();
     }
+
+    // Initialize upgrades display
+    updateUpgradesDisplay();
 
     // Initialize event listeners
     initializeEventListeners();
