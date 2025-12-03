@@ -2118,6 +2118,12 @@ function resetGame() {
 
     console.log('Confirmed, proceeding with reset');
 
+    // CRITICAL: Stop auto-save before deleting
+    if (window.autoSaveInterval) {
+        clearInterval(window.autoSaveInterval);
+        console.log('Auto-save stopped');
+    }
+
     try {
         // Check if player qualifies for leaderboard
         checkLeaderboardEntry();
@@ -2128,11 +2134,13 @@ function resetGame() {
     console.log('Removing save data');
     localStorage.removeItem('aiClickerSave');
 
+    // Double-check it's really gone
+    const checkSave = localStorage.getItem('aiClickerSave');
+    console.log('Save after removal:', checkSave);
+
     console.log('Reloading page');
-    // Try multiple reload methods
-    setTimeout(() => {
-        window.location.reload();
-    }, 100);
+    // Force hard reload
+    window.location.reload(true);
 }
 
 function checkLeaderboardEntry() {
@@ -2240,7 +2248,7 @@ function initializeEventListeners() {
     });
 
     // Auto-save every 5 seconds
-    setInterval(saveGame, 5000);
+    window.autoSaveInterval = setInterval(saveGame, 5000);
 
     // Update ticker message every 15 seconds
     setInterval(updateTickerMessage, 15000);
