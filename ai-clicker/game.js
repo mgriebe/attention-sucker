@@ -505,9 +505,7 @@ function calculateProductionRate() {
     const engagementBotMultiplier = 1 + (gameState.engagementBots * 0.05);
     const totalMultiplier = gameState.productionMultiplier * clickFarmMultiplier * engagementBotMultiplier;
 
-    const marketValue = calculateMarketValue();
-
-    return baseProduction * totalMultiplier * marketValue;
+    return baseProduction * totalMultiplier;
 }
 
 function calculateActiveBots() {
@@ -889,9 +887,11 @@ function gameLoop() {
     const deltaTime = (now - lastLoopTime) / 1000; // Convert to seconds
     lastLoopTime = now;
 
-    // Add money from production
+    // Add money from production (apply market value)
     const productionRate = calculateProductionRate();
-    gameState.money += productionRate * deltaTime;
+    const marketValue = calculateMarketValue();
+    const earnings = productionRate * marketValue * deltaTime;
+    gameState.money += earnings;
     gameState.totalPosts += productionRate * deltaTime;
 
     // Auto-AutoPosters spawn new AutoPosters
