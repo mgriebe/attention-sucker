@@ -930,8 +930,14 @@ function gameLoop() {
 // ============= SAVE/LOAD SYSTEM =============
 
 function saveGame() {
+    // Convert Set to Array for JSON serialization
+    const stateToSave = {
+        ...gameState,
+        unlockedUpgrades: Array.from(gameState.unlockedUpgrades)
+    };
+
     const saveData = {
-        state: gameState,
+        state: stateToSave,
         timestamp: Date.now()
     };
     localStorage.setItem('aiClickerSave', JSON.stringify(saveData));
@@ -944,9 +950,12 @@ function loadGame() {
             const parsed = JSON.parse(saveData);
             Object.assign(gameState, parsed.state);
 
-            // Reconstruct Set objects
+            // Reconstruct Set objects - handle both array and non-Set cases
             if (Array.isArray(gameState.unlockedUpgrades)) {
                 gameState.unlockedUpgrades = new Set(gameState.unlockedUpgrades);
+            } else if (!(gameState.unlockedUpgrades instanceof Set)) {
+                // If it's not a Set and not an Array, initialize as empty Set
+                gameState.unlockedUpgrades = new Set();
             }
 
             // Handle offline progress
@@ -1075,6 +1084,11 @@ function initializeEventListeners() {
 function initGame() {
     console.log('AI Clicker: The Content Apocalypse');
     console.log('A dystopian incremental game about AI content pollution');
+
+    // Ensure unlockedUpgrades is always a Set
+    if (!(gameState.unlockedUpgrades instanceof Set)) {
+        gameState.unlockedUpgrades = new Set();
+    }
 
     // Try to load saved game
     const loaded = loadGame();
