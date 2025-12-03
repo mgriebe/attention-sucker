@@ -2106,10 +2106,18 @@ function importSave() {
 function resetGame() {
     if (confirm('Are you sure you want to reset? All progress will be lost!')) {
         if (confirm('Really? There is no undo!')) {
-            // Check if player qualifies for leaderboard
-            checkLeaderboardEntry();
+            try {
+                // Check if player qualifies for leaderboard
+                checkLeaderboardEntry();
+            } catch (error) {
+                console.error('Leaderboard check failed:', error);
+            }
+
+            // Remove save data
             localStorage.removeItem('aiClickerSave');
-            window.location.reload(true);
+
+            // Force reload
+            window.location.href = window.location.href;
         }
     }
 }
@@ -2137,7 +2145,7 @@ function checkLeaderboardEntry() {
     if (qualifies && score.money > 0) {
         const handle = prompt('🏆 You made the leaderboard! Enter your handle (max 20 chars):', 'Anonymous');
 
-        if (handle) {
+        if (handle && handle.trim()) {
             score.handle = handle.substring(0, 20);
 
             // Add to leaderboard
@@ -2155,6 +2163,7 @@ function checkLeaderboardEntry() {
             alert('🎉 Score submitted to leaderboard! View it on the About page.');
         }
     }
+    // Always continue with reset even if user cancels leaderboard entry
 }
 
 function showModal(modalId) {
