@@ -188,6 +188,53 @@
             text-align: center;
             font-size: 0.9em;
         }
+
+        /* Leaderboard Styles */
+        #leaderboard-container {
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(0, 0, 0, 0.4);
+            font-size: 0.9em;
+        }
+
+        .leaderboard-table th {
+            background: rgba(0, 245, 255, 0.2);
+            color: #00f5ff;
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 2px solid #00f5ff;
+            font-weight: bold;
+        }
+
+        .leaderboard-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaderboard-table tr:hover {
+            background: rgba(255, 20, 147, 0.1);
+        }
+
+        .rank-1 { color: #FFD700; font-weight: bold; }
+        .rank-2 { color: #C0C0C0; font-weight: bold; }
+        .rank-3 { color: #CD7F32; font-weight: bold; }
+
+        .stat-number {
+            font-family: 'Courier New', monospace;
+            color: #f5ff00;
+        }
+
+        .empty-leaderboard {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -247,6 +294,12 @@
             <p>Each stage features unique news ticker messages and AI-generated content samples that reflect the evolving narrative.</p>
         </div>
 
+        <h2>🏆 Leaderboard</h2>
+        <p>Think you can dominate the attention economy? Reset your game to submit your score to the local leaderboard!</p>
+        <div id="leaderboard-container">
+            <p style="text-align: center; color: #f5ff00;">Loading leaderboard...</p>
+        </div>
+
         <h2>How to Play</h2>
         <ol>
             <li><strong>Click</strong> - Start by clicking "POST AI SLOP" to earn money</li>
@@ -287,5 +340,80 @@
             <p>A satirical game about AI content, bot automation, and the attention economy</p>
         </div>
     </div>
+
+    <script>
+        // Load and display leaderboard
+        function loadLeaderboard() {
+            const container = document.getElementById('leaderboard-container');
+            const leaderboard = JSON.parse(localStorage.getItem('aiClickerLeaderboard') || '[]');
+
+            if (leaderboard.length === 0) {
+                container.innerHTML = '<div class="empty-leaderboard">No scores yet! Be the first to make the leaderboard!</div>';
+                return;
+            }
+
+            // Format numbers
+            function formatNumber(num) {
+                if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+                if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+                if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+                if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+                return Math.floor(num).toLocaleString();
+            }
+
+            function formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                if (hours > 0) return `${hours}h ${minutes}m`;
+                return `${minutes}m`;
+            }
+
+            // Build table
+            let html = '<table class="leaderboard-table"><thead><tr>';
+            html += '<th>Rank</th>';
+            html += '<th>Handle</th>';
+            html += '<th>Money</th>';
+            html += '<th>Time</th>';
+            html += '<th>Posts</th>';
+            html += '<th>Clicks</th>';
+            html += '<th>$/s</th>';
+            html += '<th>Bots</th>';
+            html += '<th>Trust</th>';
+            html += '<th>Quality</th>';
+            html += '<th>Reality</th>';
+            html += '</tr></thead><tbody>';
+
+            leaderboard.forEach((score, index) => {
+                const rank = index + 1;
+                const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+
+                html += `<tr>`;
+                html += `<td class="${rankClass}">#${rank}</td>`;
+                html += `<td><strong>${escapeHtml(score.handle)}</strong></td>`;
+                html += `<td class="stat-number">$${formatNumber(score.money)}</td>`;
+                html += `<td class="stat-number">${formatTime(score.playTime)}</td>`;
+                html += `<td class="stat-number">${formatNumber(score.totalPosts)}</td>`;
+                html += `<td class="stat-number">${formatNumber(score.totalClicks)}</td>`;
+                html += `<td class="stat-number">$${formatNumber(score.postsPerSec)}</td>`;
+                html += `<td class="stat-number">${formatNumber(score.autoPosters)}</td>`;
+                html += `<td class="stat-number">${Math.floor(score.humanTrust)}%</td>`;
+                html += `<td class="stat-number">${Math.floor(score.contentQuality)}%</td>`;
+                html += `<td class="stat-number">${Math.floor(score.realityCoherence)}%</td>`;
+                html += `</tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Load leaderboard on page load
+        window.addEventListener('DOMContentLoaded', loadLeaderboard);
+    </script>
 </body>
 </html>

@@ -2106,8 +2106,53 @@ function importSave() {
 function resetGame() {
     if (confirm('Are you sure you want to reset? All progress will be lost!')) {
         if (confirm('Really? There is no undo!')) {
+            // Check if player qualifies for leaderboard
+            checkLeaderboardEntry();
             localStorage.removeItem('aiClickerSave');
             window.location.reload(true);
+        }
+    }
+}
+
+function checkLeaderboardEntry() {
+    const score = {
+        money: gameState.money,
+        totalPosts: gameState.totalPosts,
+        totalClicks: gameState.totalClicks,
+        playTime: gameState.totalPlayTime,
+        autoPosters: gameState.autoPosters,
+        humanTrust: gameState.humanTrust,
+        contentQuality: gameState.contentQuality,
+        realityCoherence: gameState.realityCoherence,
+        postsPerSec: calculateProductionRate(),
+        timestamp: Date.now()
+    };
+
+    // Get existing leaderboard
+    let leaderboard = JSON.parse(localStorage.getItem('aiClickerLeaderboard') || '[]');
+
+    // Check if score qualifies (top 25 or leaderboard has < 25 entries)
+    const qualifies = leaderboard.length < 25 || score.money > leaderboard[leaderboard.length - 1].money;
+
+    if (qualifies && score.money > 0) {
+        const handle = prompt('🏆 You made the leaderboard! Enter your handle (max 20 chars):', 'Anonymous');
+
+        if (handle) {
+            score.handle = handle.substring(0, 20);
+
+            // Add to leaderboard
+            leaderboard.push(score);
+
+            // Sort by money (descending)
+            leaderboard.sort((a, b) => b.money - a.money);
+
+            // Keep only top 25
+            leaderboard = leaderboard.slice(0, 25);
+
+            // Save leaderboard
+            localStorage.setItem('aiClickerLeaderboard', JSON.stringify(leaderboard));
+
+            alert('🎉 Score submitted to leaderboard! View it on the About page.');
         }
     }
 }
