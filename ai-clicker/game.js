@@ -223,15 +223,14 @@ const UPGRADES = {
         type: "automation"
     },
     maskUpgrade: {
-        name: "Extended Mask Duration",
-        description: "Doubles mask duration: 20 seconds protection + 10 seconds immunity.",
+        name: "Mutagenic Mask",
+        description: "Doubles all mask durations. Stacks with each purchase.",
         baseCost: 1000,
-        costMultiplier: 1,
+        costMultiplier: 2,
         unlockThreshold: 0, // Will be checked dynamically
         unlockCondition: "autoMasker",
         effect: (count) => count,
-        type: "upgrade",
-        maxPurchases: 1
+        type: "upgrade"
     },
 
     // Exponential growth - Stage 2-3
@@ -1529,9 +1528,12 @@ function updateBotMasks() {
     // Cap masks at number of autoposters
     gameState.masks = Math.min(gameState.masks, autoposters.length);
 
-    // Calculate mask duration based on upgrade
-    const maskDuration = gameState.maskUpgrade > 0 ? 20000 : 10000; // 20s or 10s
-    const immunityDuration = gameState.maskUpgrade > 0 ? 10000 : 5000; // 10s or 5s
+    // Calculate mask duration based on upgrade - doubles with each purchase
+    const baseMaskDuration = 10000; // 10 seconds
+    const baseImmunityDuration = 5000; // 5 seconds
+    const multiplier = Math.pow(2, gameState.maskUpgrade); // 2^n doubling
+    const maskDuration = baseMaskDuration * multiplier;
+    const immunityDuration = baseImmunityDuration * multiplier;
 
     // Process existing masked bots - check if mask expired
     autoposters.forEach(bot => {
