@@ -1044,8 +1044,15 @@ function resetGame() {
         if (confirm('Really? There is no undo!')) {
             console.log('Second confirm accepted, resetting...');
             localStorage.removeItem('aiClickerSave');
-            location.reload();
+            console.log('LocalStorage cleared');
+            console.log('Reloading page...');
+            // Force a hard reload
+            window.location.reload(true);
+        } else {
+            console.log('Second confirm cancelled');
         }
+    } else {
+        console.log('First confirm cancelled');
     }
 }
 
