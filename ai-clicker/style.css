@@ -767,8 +767,46 @@ body.stage-13 {
         -webkit-tap-highlight-color: transparent;
     }
 
-    /* Header becomes the clickable area */
+    /* Stats - single row at very top - no labels, no boxes */
+    .stats-display {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.9);
+        border-bottom: 2px solid var(--neon-purple);
+        padding: 6px 10px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: nowrap;
+    }
+
+    .stat-item {
+        padding: 0;
+        font-size: 0.9em;
+        flex: 0 1 auto;
+        min-width: auto;
+        background: none;
+        border: none;
+        box-shadow: none;
+    }
+
+    /* Hide labels on mobile */
+    .stat-item .stat-label {
+        display: none;
+    }
+
+    /* Hide market value on mobile to save space */
+    .stats-display .stat-item:nth-child(3) {
+        display: none;
+    }
+
+    /* Header becomes the clickable area - below stats bar */
     header {
+        margin-top: 35px;
         padding: 20px 15px;
         margin-bottom: 0;
         cursor: pointer;
@@ -807,44 +845,9 @@ body.stage-13 {
         border-top: 2px solid var(--neon-yellow);
     }
 
-    /* Stats - single row at very top */
-    .stats-display {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: rgba(0, 0, 0, 0.9);
-        border-bottom: 2px solid var(--neon-purple);
-        padding: 8px 10px;
-        z-index: 1000;
-        display: flex;
-        flex-direction: row;
-        gap: 15px;
-        justify-content: center;
-        flex-wrap: nowrap;
-    }
-
-    .stat-item {
-        padding: 4px 8px;
-        font-size: 0.85em;
-        flex: 0 1 auto;
-        min-width: auto;
-    }
-
-    .stat-item.main-stat {
-        background: none;
-        border: none;
-        box-shadow: none;
-    }
-
-    /* Hide market value on mobile to save space */
-    .stats-display .stat-item:nth-child(3) {
-        display: none;
-    }
-
     /* Adjust layout for stats bar */
     .game-layout {
-        margin-top: 40px;
+        margin-top: 0;
         grid-template-columns: 1fr;
         gap: 0;
     }
