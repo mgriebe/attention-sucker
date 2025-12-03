@@ -764,13 +764,10 @@ function updateBodyClass() {
 // ============= GAME ACTIONS =============
 
 function handleClick() {
-    console.log('Click detected!');
     const value = calculateClickValue();
-    console.log('Click value:', value);
     gameState.money += value;
     gameState.totalClicks++;
     gameState.totalPosts++;
-    console.log('New money:', gameState.money);
 
     createParticle(value);
 
@@ -1044,11 +1041,7 @@ function formatMoney(num) {
 
 function initializeEventListeners() {
     // Click button
-    console.log('Attaching click event listener...');
-    const clickArea = document.getElementById('click-area');
-    console.log('Click area element:', clickArea);
-    clickArea.addEventListener('click', handleClick);
-    console.log('Event listener attached!');
+    document.getElementById('click-area').addEventListener('click', handleClick);
 
     // Control buttons
     document.getElementById('save-btn').addEventListener('click', () => {
@@ -1080,31 +1073,25 @@ function initializeEventListeners() {
 // ============= INITIALIZATION =============
 
 function initGame() {
-    console.log('=== AI Clicker: The Content Apocalypse ===');
+    console.log('AI Clicker: The Content Apocalypse');
     console.log('A dystopian incremental game about AI content pollution');
-    console.log('Initializing game...');
 
     // Try to load saved game
     const loaded = loadGame();
-    console.log('Save game loaded:', loaded);
 
     if (!loaded) {
         // First time playing
-        console.log('No save found, initializing new game');
         updateDisplay();
         updateStageDisplay();
     }
 
     // Initialize event listeners
-    console.log('Initializing event listeners...');
     initializeEventListeners();
 
     // Start game loop
-    console.log('Starting game loop...');
     requestAnimationFrame(gameLoop);
 
-    console.log('=== Game initialized successfully! ===');
-    console.log('Click the POST AI CONTENT button to begin your descent into the content apocalypse...');
+    console.log('Game initialized. Click to begin your descent into the content apocalypse...');
 }
 
 // Start the game when DOM is ready
