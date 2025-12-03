@@ -264,6 +264,10 @@ h1 {
     box-shadow: 0 0 30px var(--neon-pink), inset 0 0 30px rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 10;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .click-button:hover {
@@ -282,12 +286,78 @@ h1 {
     text-align: center;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
     margin-bottom: 10px;
+    user-select: none;
 }
 
 .click-subtext {
     font-size: 1.2em;
     color: var(--neon-yellow);
     text-shadow: 0 0 10px var(--neon-yellow);
+    user-select: none;
+}
+
+/* Bots Container */
+#bots-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 3;
+}
+
+.bot-icon {
+    position: absolute;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    animation: float 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.bot-icon.autoposter {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, var(--neon-green), var(--neon-blue));
+    border: 2px solid var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+}
+
+.bot-icon.auto-autoposter {
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, var(--neon-pink), var(--neon-purple));
+    border: 3px solid var(--neon-pink);
+    box-shadow: 0 0 15px var(--neon-pink);
+    animation: float 4s ease-in-out infinite, pulse 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) translateX(0px);
+    }
+    25% {
+        transform: translateY(-10px) translateX(5px);
+    }
+    50% {
+        transform: translateY(-5px) translateX(-5px);
+    }
+    75% {
+        transform: translateY(-15px) translateX(3px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 15px var(--neon-pink);
+    }
+    50% {
+        box-shadow: 0 0 25px var(--neon-pink), 0 0 35px var(--neon-purple);
+    }
 }
 
 /* Particles */

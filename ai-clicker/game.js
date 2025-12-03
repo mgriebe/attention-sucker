@@ -693,7 +693,80 @@ function updateDisplay() {
     document.getElementById('content-quality').textContent = gameState.contentQuality.toFixed(1) + '%';
     document.getElementById('reality-coherence').textContent = gameState.realityCoherence.toFixed(1) + '%';
 
+    // Update bot icons
+    updateBotIcons();
+
     // Note: updateUpgradesDisplay() is now called only when upgrades change, not every frame
+}
+
+function updateBotIcons() {
+    const container = document.getElementById('bots-container');
+    const targetAutoPosters = Math.floor(gameState.autoPosters);
+    const targetAutoAutoPosters = Math.floor(gameState.autoAutoPosters);
+
+    // Count existing bots
+    const existingAutoPosters = container.querySelectorAll('.autoposter').length;
+    const existingAutoAutoPosters = container.querySelectorAll('.auto-autoposter').length;
+
+    // Add AutoPosters if needed
+    if (targetAutoPosters > existingAutoPosters) {
+        const toAdd = Math.min(targetAutoPosters - existingAutoPosters, 5); // Max 5 per frame for performance
+        for (let i = 0; i < toAdd; i++) {
+            createBotIcon('autoposter');
+        }
+    }
+
+    // Remove AutoPosters if needed (when busted)
+    if (targetAutoPosters < existingAutoPosters) {
+        const toRemove = existingAutoPosters - targetAutoPosters;
+        const autoposters = container.querySelectorAll('.autoposter');
+        for (let i = 0; i < toRemove && i < autoposters.length; i++) {
+            autoposters[i].remove();
+        }
+    }
+
+    // Add Auto-AutoPosters if needed
+    if (targetAutoAutoPosters > existingAutoAutoPosters) {
+        const toAdd = targetAutoAutoPosters - existingAutoAutoPosters;
+        for (let i = 0; i < toAdd; i++) {
+            createBotIcon('auto-autoposter');
+        }
+    }
+
+    // Remove Auto-AutoPosters if needed
+    if (targetAutoAutoPosters < existingAutoAutoPosters) {
+        const toRemove = existingAutoAutoPosters - targetAutoAutoPosters;
+        const autoAutoPosters = container.querySelectorAll('.auto-autoposter');
+        for (let i = 0; i < toRemove && i < autoAutoPosters.length; i++) {
+            autoAutoPosters[i].remove();
+        }
+    }
+}
+
+function createBotIcon(type) {
+    const container = document.getElementById('bots-container');
+    const bot = document.createElement('div');
+    bot.className = `bot-icon ${type}`;
+
+    // Random position within the container, avoiding the center button area
+    const containerRect = container.getBoundingClientRect();
+    let x, y;
+    do {
+        x = Math.random() * (containerRect.width - 60);
+        y = Math.random() * (containerRect.height - 60);
+        // Check if too close to center (where button is)
+        const centerX = containerRect.width / 2;
+        const centerY = containerRect.height / 2;
+        const distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+    } while (distanceFromCenter < 200); // Keep bots away from button
+
+    bot.style.left = x + 'px';
+    bot.style.top = y + 'px';
+
+    // Random animation delay for variety
+    bot.style.animationDelay = (Math.random() * 3) + 's';
+
+    container.appendChild(bot);
 }
 
 function updateUpgradesDisplay() {
