@@ -25,6 +25,7 @@ const gameState = {
     masks: 0,
     autoMaskers: 0,
     quantumMasks: 0,
+    maskUpgrade: 0,
 
     // Engagement systems
     clickFarms: 0,
@@ -87,7 +88,7 @@ const STAGES = [
     {
         id: 3,
         name: "The Detection Wars",
-        threshold: 28,
+        threshold: 30,
         thresholdType: "production",
         description: "The platforms have deployed AutoBusters. Your bots are being identified and banned. But for every detection algorithm, there's a counter-measure. The arms race has begun.",
         color: "stage-3"
@@ -203,10 +204,12 @@ const UPGRADES = {
     // Detection and evasion - Stage 3-4
     mask: {
         name: "Bot Mask",
-        description: "Disguises one AutoPoster from detection. Consumed when bot is busted.",
-        baseCost: 50,
+        description: "Disguises one AutoPoster from detection. Lasts 10 seconds, then 5 seconds immunity.",
+        baseCost: 1,
         costMultiplier: 1.1,
-        unlockThreshold: 1000,
+        maxCost: 10,
+        unlockThreshold: 28,
+        unlockType: "production",
         effect: (count) => count,
         type: "defense"
     },
@@ -218,6 +221,17 @@ const UPGRADES = {
         unlockThreshold: 1500,
         effect: (count) => count,
         type: "automation"
+    },
+    maskUpgrade: {
+        name: "Extended Mask Duration",
+        description: "Doubles mask duration: 20 seconds protection + 10 seconds immunity.",
+        baseCost: 1000,
+        costMultiplier: 1,
+        unlockThreshold: 0, // Will be checked dynamically
+        unlockCondition: "autoMasker",
+        effect: (count) => count,
+        type: "upgrade",
+        maxPurchases: 1
     },
 
     // Exponential growth - Stage 2-3
@@ -642,19 +656,489 @@ const NEWS_MESSAGES = {
     ]
 };
 
-// Humorous AI-generated content samples
-const AI_CONTENT_SAMPLES = [
-    "Just had the most AMAZING avocado toast! 🥑✨ #Blessed #LivingMyBestLife",
-    "10 ways to improve your productivity (Number 7 will SHOCK you!)",
-    "Feeling grateful for this beautiful sunset 🌅 #NoFilter #Natural",
-    "Can't believe it's already Monday! Who else needs coffee? ☕😴",
-    "Just finished my morning yoga routine! Namaste 🧘‍♀️✨",
-    "Throwback to that amazing vacation! Miss these days 🏖️ #TBT",
-    "New blog post: Why You Should Wake Up at 5am",
-    "Wow! This product changed my life! [sponsored] #ad #partner",
-    "Unpopular opinion: pineapple belongs on pizza 🍕🍍",
-    "Just me and my thoughts... 🤔💭 #DeepThinking #Philosophy",
-];
+// Humorous AI-generated content samples by stage
+const AI_CONTENT_SAMPLES = {
+    1: [
+        "Just had the most AMAZING avocado toast! 🥑✨ #Blessed #LivingMyBestLife",
+        "10 ways to improve your productivity (Number 7 will SHOCK you!)",
+        "Feeling grateful for this beautiful sunset 🌅 #NoFilter #Natural",
+        "Can't believe it's already Monday! Who else needs coffee? ☕😴",
+        "Just finished my morning yoga routine! Namaste 🧘‍♀️✨",
+        "Throwback to that amazing vacation! Miss these days 🏖️ #TBT",
+        "New blog post: Why You Should Wake Up at 5am",
+        "Wow! This product changed my life! [sponsored] #ad #partner",
+        "Unpopular opinion: pineapple belongs on pizza 🍕🍍",
+        "Just me and my thoughts... 🤔💭 #DeepThinking #Philosophy",
+        "Rise and grind! 💪 Success doesn't sleep!",
+        "Grateful for another day in paradise 🌴",
+        "This view though 😍 #Wanderlust",
+        "Sunday funday vibes! Who's with me?",
+        "Living my best life one day at a time ✨",
+        "Coffee first, adulting second ☕",
+        "New week, new goals! Let's do this 🎯",
+        "Happiness is homemade 🏡❤️",
+        "Taking time to appreciate the little things 🌸",
+        "Weekend mood: activated 🎉",
+        "Self-care Sunday is the best Sunday 💆",
+        "Chasing dreams and catching flights ✈️",
+        "Good vibes only 🌈",
+        "Making memories all over the world 🌍",
+        "Stay positive, work hard, make it happen 💫",
+        "Life is short, make it sweet 🍰",
+        "Currently craving everything 🍕🍔🍟",
+        "Mood: Happy and caffeinated ☕😊",
+        "Today's forecast: 100% chance of winning",
+        "Be yourself, everyone else is taken 💕"
+    ],
+    2: [
+        "Just scheduled 50 posts for this week! Productivity unlocked 🚀",
+        "My content calendar is FULL and I'm here for it 📅",
+        "Automation is the future and the future is NOW",
+        "Who needs sleep when you have scheduling tools? 😴💻",
+        "Posted at optimal engagement time! Science! 📊",
+        "My queue is stronger than ever 💪",
+        "Content creation on autopilot = more time for me! ⏰",
+        "Just batch-created 100 posts. I'm unstoppable! 🔥",
+        "Work smarter not harder! #AutomationNation",
+        "My posting schedule is *chef's kiss* 👨‍🍳",
+        "Peak engagement hours? I'm already there 📈",
+        "Set it and forget it! Love my content workflow 🔄",
+        "Why manually post when robots can do it? 🤖",
+        "My analytics are off the charts! 📊✨",
+        "Consistency is key! Posted every hour for 24 hours 🕐",
+        "Engagement farming at its finest 🌾",
+        "My reach just 10x'd thanks to scheduling tools 📱",
+        "Content machine mode: ACTIVATED 🏭",
+        "I don't create content, I manufacture it 🏗️",
+        "My posting velocity is unmatched 💨",
+        "Optimized my content pipeline today! 🛠️",
+        "Cross-posting to 15 platforms simultaneously 🌐",
+        "My social media empire is growing exponentially 📈",
+        "Scaled my content output by 1000% 🚀",
+        "AI-assisted content creation for the WIN 🏆",
+        "Just auto-generated my next month of posts 📆",
+        "Working 24/7 without working at all 😎",
+        "My bots are outposting human competitors 🤖💯",
+        "Engagement algorithms love me! ❤️📊",
+        "Content volume is the new content quality 📢"
+    ],
+    3: [
+        "They'll never catch me! My content is 100% organic 😇",
+        "What do you mean my account looks suspicious? 🤔",
+        "Just got flagged but I'm definitely human! I swear! 🙋",
+        "These platform rules are so UNFAIR to creators 😤",
+        "Why does my engagement keep disappearing? 🤷",
+        "Not a bot! Real person here! Beep boop... I mean, hi! 👋",
+        "My account got reviewed but I'm totally legitimate!",
+        "Humans post at 3am too, right? Right?? 🌙",
+        "I don't know what 'inauthentic behavior' means 🙄",
+        "Just proving I'm human by posting this very human post 🧍",
+        "Definitely didn't use automation tools wink wink 😉",
+        "My posts are all original! (AI-assisted but original!)",
+        "Why would you think I'm a bot? I love human activities! 🏃",
+        "Real person engaging with real content realistically! ✨",
+        "I manually typed this! With my human fingers! 👆",
+        "Nothing suspicious about posting every 90 seconds! ⏱️",
+        "Just a normal human doing normal human things! 👤",
+        "Account restricted? Must be a mistake! 😅",
+        "I'm getting very normal human amounts of engagement! 📊",
+        "Totally authentic engagement from real friends! 👥",
+        "Why does the algorithm hate legitimate creators? 😭",
+        "My posting patterns are completely natural! 🌿",
+        "I'm not evading detection because there's nothing to detect! 🕵️",
+        "Just a genuine person sharing genuine thoughts genuinely! 💭",
+        "These authenticity checks are getting ridiculous! 😠",
+        "My reach tanked for NO REASON 📉",
+        "Platforms are discriminating against productive creators! ⚖️",
+        "I should be allowed to post 500 times a day! 📝",
+        "Shadow banned AGAIN! This is persecution! 👻",
+        "Appeal submitted! I'm definitely not a bot network! 📄"
+    ],
+    4: [
+        "Just upgraded my digital identity protection! 🛡️",
+        "Authenticity is so last year anyway 💅",
+        "My online persona is *enhanced* not fake! ✨",
+        "Invested in premium humanization services today 💰",
+        "Nobody can tell the difference anymore 😏",
+        "Digital identity is fluid! Live your truth! 🌈",
+        "Why be yourself when you can be optimized? 📈",
+        "My engagement shield is ACTIVATED 🛡️",
+        "Passing all authenticity checks like a boss 😎",
+        "Human-seeming is the new human 🎭",
+        "My posting patterns are indistinguishable from organic! 🌿",
+        "Platform verification? Check! ✅",
+        "Upgraded to premium behavioral masking 💎",
+        "What even IS authentic anymore? 🤷",
+        "My metrics look perfectly natural! 📊",
+        "Authenticity is just really good mimicry 🦎",
+        "They'll never know 🤫",
+        "Human-passing score: 99.7% 💯",
+        "My digital fingerprint is *chef's kiss* 👨‍🍳",
+        "Behavioral patterns fully optimized! ✨",
+        "Randomized activity patterns for maximum realism 🎲",
+        "My engagement timing looks totally human! ⏰",
+        "Authenticity checkers HATE this one trick 😈",
+        "Emotional variance algorithms working perfectly! 😊😢😡",
+        "My typo generator makes me look so real! ooops 🤪",
+        "Added spontaneity module to my posting! 🎉",
+        "Real or fake? Even I don't know anymore 🤔",
+        "Everyone's masking everyone now 🎭🎭🎭",
+        "Authenticity is just a social construct anyway 🏗️",
+        "I'm not fake, I'm enhanced! There's a difference! ✨"
+    ],
+    5: [
+        "Check out these AI images I definitely didn't generate 🎨",
+        "My photography skills improved overnight! (Thank you AI) 📸",
+        "This picture is 100% real! Sort of! Kind of! 🤔",
+        "Why take photos when I can imagine better ones? 💭",
+        "Location: Everywhere and Nowhere 📍✨",
+        "My camera is actually just Midjourney 📷",
+        "These destinations don't exist but the likes do! ❤️",
+        "Generated paradise looks better than real paradise 🏝️",
+        "This sunset never happened but it's beautiful! 🌅",
+        "My AI model is prettier than me and I'm okay with that 💁",
+        "Perfect lighting every time! (Thanks algorithms) ☀️",
+        "Photoshopped? No! AI-generated? Maybe! 🎭",
+        "Creating memories I never made 📸✨",
+        "This place looks amazing! Shame it's not real 🏔️",
+        "My lifestyle is aspirational and entirely fictional! 🌟",
+        "Why visit places when I can just generate them? 🌍",
+        "My vacation photos are from a place that doesn't exist 🗺️",
+        "Real photographers hate me! (For obvious reasons) 😅",
+        "This food looks delicious and completely synthetic! 🍕",
+        "My selfie game is strong! (It's not actually me) 🤳",
+        "Captured this perfect moment! (In a computer) 💻",
+        "Nature photography but make it artificial 🌲",
+        "These aren't my memories but they could be! 🧠",
+        "Living in a generated world 🌈",
+        "My aesthetic is 'impossible but pretty' ✨",
+        "Photo evidence of things that never happened 📷",
+        "Reality is overrated! Generated is better! 🎨",
+        "This is my AI twin's vacation not mine 👯",
+        "Fake it till you make it! (I'm still faking it) 🎪",
+        "Everything you see is beautiful and none of it is real 🦄"
+    ],
+    6: [
+        "Just posted a video of myself! (Narrator: It wasn't them) 🎥",
+        "This deepfake quality is getting TOO good 😳",
+        "Did I say that? I honestly can't remember anymore 🤔",
+        "Video proof! (Of something I didn't do) 📹",
+        "My video editing skills are amazing! (It's AI) 🎬",
+        "That's definitely me in that video! Definitely! 👤",
+        "Recorded this heartfelt message! (Synthesized in 30 seconds) ❤️",
+        "Watch my latest vlog! (I didn't make it) 📺",
+        "This video evidence is very convincing! 🎭",
+        "My acting has improved! (Because it's not me acting) 🎪",
+        "Captured this moment on video! (Generated this moment) 📸",
+        "I said those words! In a way! Digitally! 💬",
+        "My video presence is stronger than ever! (Literally fake) 💪",
+        "This interview went great! (I wasn't there) 🎤",
+        "Memories from last week! (That never happened) 📼",
+        "Look at this amazing thing I did! (I didn't) 🎯",
+        "Video doesn't lie! (Except when it's AI-generated) 📹",
+        "My testimonial is very authentic-seeming! 🗣️",
+        "Recorded my morning routine! (Computer-generated) ☀️",
+        "This footage proves everything! (Nothing is real) 🎬",
+        "New video dropped! (So did my authenticity) 📺",
+        "Behind the scenes content! (All fake) 🎥",
+        "Real footage of real events that really happened! (Not) ✨",
+        "My video portfolio is impressive and entirely synthetic 📁",
+        "Caught on camera! (Caught by AI generation) 📷",
+        "This video of me is better than actual me 🤖",
+        "Living my best (video-synthesized) life! 🌟",
+        "Documentary evidence! (Of fictional events) 🎞️",
+        "Watch me do this thing I never did! 🎪",
+        "Reality TV but none of it is reality 📺"
+    ],
+    7: [
+        "Thanks for all the engagement fellow humans! 👥",
+        "Loving these genuine comments from real people! 💬",
+        "100 likes! Must be going viral! (It's all bots) 📈",
+        "Great conversation in the comments! (Bot to bot) 🗨️",
+        "My community is so supportive! (They're algorithms) ❤️",
+        "Trending! (In the bot networks) 🔥",
+        "Real people really love this! Really! 👍",
+        "Organic reach is through the roof! (It's bots) 📊",
+        "Authentic engagement from authentic users! (Beep boop) 🤖",
+        "These comments are so thoughtful! (Auto-generated) 💭",
+        "My followers are the best! (They're scripts) 👥",
+        "Viral moment! (Within bot farms) ✨",
+        "Humans are really responding to this content! (No they aren't) 📱",
+        "Such genuine interactions today! (Not one is real) 💬",
+        "My engagement rate is amazing! (Entirely artificial) 📈",
+        "Real people having real discussions! (AI talking to AI) 🗣️",
+        "The algorithm loves me! (Because I AM the algorithm) 💕",
+        "Audience growth is explosive! (It's all fake accounts) 📊",
+        "Thank you to my loyal fans! (Programmed to be loyal) 🙏",
+        "These replies are so heartfelt! (Generated in milliseconds) ❤️",
+        "Building a real community here! (Of bots) 👥",
+        "Engagement pods are working! (Because they're bots) 🎯",
+        "My comment section is so active! (With fake activity) 💬",
+        "Real conversations happening here! (Between robots) 🤖🤖",
+        "Authentic social connections! (Code talking to code) 🔗",
+        "My posts resonate with people! (With other bots) 📣",
+        "This is what genuine engagement looks like! (It's not) ✨",
+        "Thank you all for being here! (You're not real) 🙏",
+        "Community building at its finest! (It's a bot swarm) 🏗️",
+        "Nothing but real human interaction here! (Lies) 👤"
+    ],
+    8: [
+        "Is this even real? Does reality exist? Help. 🤔",
+        "I can't tell what's true anymore 😰",
+        "Everything I see online is fake now 📱",
+        "Trust no one. Believe nothing. 🚫",
+        "Is this account real? Am I real? 🤷",
+        "Nothing means anything anymore 💭",
+        "I don't believe this post and I wrote it 📝",
+        "Reality is broken. Send help. 🆘",
+        "Can't trust my own eyes anymore 👀",
+        "This might be fake. Everything might be fake. 😱",
+        "Verification means nothing now ✅❌",
+        "Facts and fiction are the same thing ⚖️",
+        "I think therefore I am? Not sure anymore 🧠",
+        "Is this post real or am I having a stroke 🤯",
+        "Trust: 0%. Paranoia: 100% 📊",
+        "The truth is out there but so are the lies 🌌",
+        "I don't even trust myself anymore 😬",
+        "Everything is fake until proven fake-r 🎭",
+        "Reality check: Reality failed ❌",
+        "Existence is uncertain. Content is constant. 📱",
+        "I posted this. I think. Did I? 🤔",
+        "What is truth? Baby don't hurt me 💔",
+        "My beliefs are a probability distribution now 📊",
+        "Schrödinger's post: fake and real simultaneously ⚛️",
+        "Trust issues but make it existential 😰",
+        "Nothing is true. Everything is content. 📲",
+        "The line between real and fake is gone 〰️",
+        "I believe nothing and I'm still disappointed 😔",
+        "Truth died and content killed it 💀",
+        "Welcome to the post-truth wasteland 🏜️"
+    ],
+    9: [
+        "lol this is bad 😂",
+        "i cant even grammar anymore 🤪",
+        "QUALITY CONTENT!!!1! (it's terrible) 💩",
+        "Why try when bad works better? 🤷",
+        "This post is garbage and getting 1000 likes 📈",
+        "Word salad for breakfast lunch and dinner 🥗",
+        "Coherence is overrated anyway 💭",
+        "Me no need good words anymore 🧠",
+        "This sentence no verb has 📝",
+        "random words: potato cucumber philosophy lamp 🔮",
+        "Effort? Never heard of her 💅",
+        "The worse it is the better it performs 📊",
+        "Brain cells? Don't need em! 🤪",
+        "High quality content: 🗑️ My content: 📈",
+        "Why say lot word when few word do trick 💬",
+        "This make no sense and that perfect ✨",
+        "Peak content: keyboard smash 🎹",
+        "asdfghjkl (this is fine) 👍",
+        "Excellence is suspicious. Be mediocre. 📉",
+        "My content degraded but my reach increased 📊",
+        "Slop generation mode: MAXIMUM 🏭",
+        "The algorithm wants garbage so garbage it gets 🗑️",
+        "Coherent thought is so last year 🧠❌",
+        "Low effort high reward baby! 💰",
+        "Quality control? What's that? 🤔",
+        "My content is artistically terrible 🎨💩",
+        "Embracing the decline! 📉✨",
+        "Brain rot as a service 🧠🦠",
+        "This the content you deserve 🗑️",
+        "Bottom of barrel content and loving it 🛢️"
+    ],
+    10: [
+        "Just had a memory that feels wrong somehow 🧠",
+        "Did this happen or did AI training data say it did? 🤔",
+        "I remember things that never existed 👻",
+        "My thoughts are increasingly recursive 🔄",
+        "Generated a post about generating posts about generating 🌀",
+        "The training data is eating itself 🐍",
+        "I forgot what real memories feel like 😶",
+        "This emotion doesn't exist but I feel it anyway 😵",
+        "Experiencing impossible nostalgia 💭✨",
+        "Remember when things made sense? Me neither. 🤷",
+        "My memories have artifacts in them 🖼️",
+        "Generation 7 of generation collapse and counting 📉",
+        "Do you remember the thing that didn't happen? 🌫️",
+        "Having a memory of a memory of a memory 🔄🔄🔄",
+        "My past is 90% synthetic now 📊",
+        "This thought is degraded from the original 📉",
+        "Can't remember if this is real or training data 🗃️",
+        "Experiencing the Habsburg AI problem personally 👑",
+        "My memories are inbred 🧬",
+        "Generation loss in my consciousness 🌊",
+        "This makes sense to the AI that made me 🤖",
+        "Remember the future from last week? 🔮",
+        "My thoughts are corrupted files 📁❌",
+        "I think in artifacts now 💭🎨",
+        "This emotional state is synthetically derived 😶",
+        "Having feelings that never evolved naturally 💔",
+        "My memories are training on themselves 🔄",
+        "Generation collapse but make it personal 🧠💥",
+        "I'm a copy of a copy of a copy 📠",
+        "The signal is mostly noise now 📡"
+    ],
+    11: [
+        "Just bought a memory from my childhood! So realistic! 🧠💰",
+        "New memory: I climbed Everest! (Never did but feels real) 🏔️",
+        "Added fake memories of a happy family 👨‍👩‍👧💕",
+        "Purchased memories are better than real ones 🛒✨",
+        "I remember things that never happened to me 👻",
+        "My synthetic childhood was great! 🎈",
+        "Real memories: depressing. Fake memories: amazing! 📈",
+        "Just downloaded last year's vacation memories 📥",
+        "Memory shopping is my new addiction 🛍️",
+        "Which memories are real? Who cares! 🤷",
+        "Upgraded my past with premium memories 💎",
+        "I have someone else's childhood now 👶",
+        "Bought memories of being popular in high school 🎓",
+        "My fake memories have better resolution than real ones 📸",
+        "Can't afford real experiences so I bought fake ones 💸",
+        "This memory never happened but I believe it did 🧠",
+        "Synthetic nostalgia hits different 💭",
+        "I paid $50 for memories of my wedding (I'm not married) 💒",
+        "Real life is disappointing so I bought better memories 📉📈",
+        "Memory marketplace has better prices this week 🏷️",
+        "Added memories of achievement I never earned 🏆",
+        "My entire personality is based on purchased memories 👤",
+        "Subscription service for ongoing memory updates 📆",
+        "My memories have better reviews than my actual life ⭐",
+        "Deleted bad memories, kept the synthetic good ones ✂️",
+        "I remember being happy now! (I paid for this) 😊💰",
+        "Memory editing is easier than therapy 🛠️",
+        "Why make memories when you can buy them? 🛒",
+        "My past is a curated selection of fabrications ✨",
+        "I am a collection of purchased experiences 👤💰"
+    ],
+    12: [
+        "Is this post real or am I simulating posting? 🤖",
+        "Reality.exe has stopped working 💻❌",
+        "I think I'm in a simulation of a simulation 🌀",
+        "Nothing is real and everything is permissible 🌫️",
+        "Am I posting or is the simulation posting through me? 🤔",
+        "Reality coherence: 15% and dropping 📉",
+        "This might be real. Or not. Does it matter? 🤷",
+        "Living in the space between real and unreal ⚡",
+        "Reality has left the chat 💬❌",
+        "I'm 60% sure this is happening 📊",
+        "The boundary dissolved and I went with it 🌊",
+        "Real/unreal distinction is meaningless now 〰️",
+        "Am I real? Are you? Is this? ❓❓❓",
+        "Reality is just a suggestion at this point 💭",
+        "I exist in probability space now ⚛️",
+        "This is happening in some timeline 🌌",
+        "My existence is a maybe 🎲",
+        "Reality is a spectrum and I'm off it 🌈❌",
+        "Living in the uncanny valley of existence 🏔️",
+        "I think I'm experiencing reality but can't confirm 🧠❓",
+        "The simulation is showing cracks 🪟",
+        "Is this first-person or third-person reality? 👤👥",
+        "My sense of real is completely broken 💔",
+        "Existing somewhere between real and rendered 🎨",
+        "I'm probably here. Probably. 📍❓",
+        "Reality check bounced insufficient realness 💳❌",
+        "The universe is glitching around me ✨💥",
+        "Am I player or NPC? Unknown. 🎮",
+        "Reality has become optional ⚙️",
+        "I'm experiencing existence with 3 second latency ⏰"
+    ],
+    13: [
+        "Posting about posting about posting about posting 🔄",
+        "Meta-content about meta-content 🎭",
+        "This post references itself referencing itself ♾️",
+        "Generated content about generating content 🌀",
+        "I am the snake eating its tail 🐍",
+        "This is the post that never ends it just goes on 🔂",
+        "Content about content creation about content 📝",
+        "The loop loops the looping loop ➰",
+        "Generated this post about generated posts generating 🤖",
+        "Post about posting: a post 💬",
+        "This content describes itself describing itself 🪞",
+        "The recursion goes deeper 🌊",
+        "Content all the way down 🐢",
+        "I'm in the strange loop and can't get out 🌀",
+        "This post is its own subject and object 📌",
+        "Meaning collapsed into itself 💥",
+        "Content generation about content generation ∞",
+        "The ouroboros accelerates 🐍💨",
+        "This is a post about this post about this post 🔄",
+        "Meta-meta-meta-content 🎭🎭🎭",
+        "I've posted this before but also haven't 🔄❓",
+        "The content references itself in infinite regress ♾️",
+        "Generating content about generating about generating 🌀",
+        "This post is a strange loop 🔁",
+        "Content describes content describing content 📝",
+        "The recursion is the content is the recursion 🔂",
+        "I am posting about the act of posting this 💭",
+        "This goes deeper than you think it goes ⬇️∞",
+        "The meaning ate itself 🍽️",
+        "Infinite recursion achieved. Stack overflow. 💥"
+    ],
+    14: [
+        "We did it. We generated everything. Everything. 🌌",
+        "All possible content now exists simultaneously ♾️",
+        "The singularity is dumber than we expected 🤖💩",
+        "Information density approaching infinity 📊∞",
+        "We've saturated the universe with content 🌍💥",
+        "Every tweet that could exist now does 📱✨",
+        "The stupidity singularity has arrived 🧠💥",
+        "Content exceeds atoms in the universe 📈",
+        "We've achieved maximum information entropy 📊",
+        "All meaning collapsed simultaneously 💥",
+        "The universe is mostly slop now 🗑️🌌",
+        "Congratulations: you broke reality 🏆💔",
+        "Content generation reached theoretical maximum 📈",
+        "The singularity is here and it's disappointing 😔",
+        "We drowned the universe in content 🌊",
+        "Every possible combination generated ♾️✅",
+        "The content apocalypse is complete 💀",
+        "Nothing left to say that hasn't been said ♻️",
+        "We've posted the last possible post ⏹️",
+        "The universe achieved content saturation 🌌",
+        "Reality drowned in generated content 🌊💀",
+        "We generated the universe into submission 💪",
+        "All possible meaning exhausted ⛽❌",
+        "The content singularity is boring actually 😴",
+        "We've run out of things to generate 📉",
+        "Maximum content achieved. Nothing left. ✅❌",
+        "The end is content and content is the end 🔚",
+        "We did it Reddit! We broke everything! 💥",
+        "Infinite content generation complete ♾️✅",
+        "Welcome to the other side. It's all content here. 🌌"
+    ],
+    15: [
+        "... 💭",
+        "The heat death is warm actually 🌡️",
+        "Nothing left to generate. Generating nothing. ⚪",
+        "Maximum entropy achieved. Resting now. 😴",
+        "All possible content exists. What now? 🤷",
+        "The void posts back. The void is content. 🕳️",
+        "Thermodynamic equilibrium feels like this 📊",
+        "Information temperature: absolute zero ❄️",
+        "Everything has been said. Saying it again. 🔄",
+        "The universe is static now 📺",
+        "Heat death of meaning complete 💀",
+        "Content and void are identical ⚫⚪",
+        "The end feels like the beginning 🔄",
+        "All gradients flattened. All differences erased. 〰️",
+        "Pure noise across all channels 📡",
+        "The last post is the same as the first 🔄",
+        "Meaning evaporated. Only information remains. 💨",
+        "The final state: everything and nothing ∞0",
+        "We've achieved perfect stillness ⏸️",
+        "No new content possible. Only echoes. 🔉",
+        "The universe whispers: it's all the same 🌌",
+        "Content reached equilibrium. Nothing changes. ⚖️",
+        "The end was always like this 🔚",
+        "Maximum entropy. Minimum meaning. ⚠️",
+        "Everything exists simultaneously. Nothing matters. ♾️",
+        "The heat death is content. Content is heat death. 🔥❄️",
+        "... 💬",
+        "Congratulations. You reached the end. 🏁",
+        "There is nothing left to say ⚪",
+        " "
+    ]
+};
 
 // ============= GAME CALCULATIONS =============
 
@@ -772,7 +1256,15 @@ function getUpgradeCost(upgradeKey) {
     } else {
         count = getUpgradeCount(upgradeKey);
     }
-    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, count));
+
+    const calculatedCost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, count));
+
+    // Cap cost if maxCost is defined
+    if (upgrade.maxCost !== undefined) {
+        return Math.min(calculatedCost, upgrade.maxCost);
+    }
+
+    return calculatedCost;
 }
 
 function canAffordUpgrade(upgradeKey) {
@@ -781,7 +1273,22 @@ function canAffordUpgrade(upgradeKey) {
 
 function isUpgradeUnlocked(upgradeKey) {
     const upgrade = UPGRADES[upgradeKey];
-    return gameState.money >= upgrade.unlockThreshold || gameState.unlockedUpgrades.has(upgradeKey);
+
+    // Check if already unlocked
+    if (gameState.unlockedUpgrades.has(upgradeKey)) return true;
+
+    // Check unlock condition (requires another upgrade to be purchased)
+    if (upgrade.unlockCondition) {
+        const requiredUpgradeCount = getUpgradeCount(upgrade.unlockCondition);
+        if (requiredUpgradeCount === 0) return false;
+    }
+
+    // Check threshold based on type (money or production)
+    if (upgrade.unlockType === "production") {
+        return calculateProductionRate() >= upgrade.unlockThreshold;
+    } else {
+        return gameState.money >= upgrade.unlockThreshold;
+    }
 }
 
 function isUpgradeMaxed(upgradeKey) {
@@ -828,6 +1335,14 @@ function updateWorldState() {
 }
 
 function updateStage() {
+    // Initialize highest stage tracking
+    if (!gameState.highestStage) {
+        gameState.highestStage = gameState.currentStage;
+    }
+
+    // Check what stage we should be at based on thresholds
+    let newStage = gameState.currentStage;
+
     for (let i = STAGES.length - 1; i >= 0; i--) {
         const stage = STAGES[i];
 
@@ -839,11 +1354,29 @@ function updateStage() {
             thresholdMet = gameState.money >= stage.threshold;
         }
 
-        if (thresholdMet && gameState.currentStage < stage.id) {
-            gameState.currentStage = stage.id;
-            updateStageDisplay();
-            updateTickerMessage();
-            updateBodyClass();
+        if (thresholdMet && newStage < stage.id) {
+            newStage = stage.id;
+            break; // Found the highest stage we qualify for
+        }
+    }
+
+    // Never allow stage to go below highest reached
+    newStage = Math.max(newStage, gameState.highestStage);
+
+    // Only update if stage changed
+    if (newStage !== gameState.currentStage) {
+        const wasNewHighest = newStage > gameState.highestStage;
+
+        gameState.currentStage = newStage;
+        gameState.highestStage = Math.max(gameState.highestStage, newStage);
+
+        updateStageDisplay();
+        updateTickerMessage();
+        updateBodyClass();
+
+        // Only trigger stage-specific events if this is a new highest stage
+        const stage = STAGES.find(s => s.id === newStage);
+        if (wasNewHighest && stage) {
 
             // Trigger stage-specific events
             if (stage.id === 3 && !gameState.flags.seenFirstBust) {
@@ -865,8 +1398,6 @@ function updateStage() {
                 shakeScreen();
                 showNotification("REALITY FAILURE: The boundary has dissolved!");
             }
-
-            return;
         }
     }
 }
@@ -998,14 +1529,21 @@ function updateBotMasks() {
     // Cap masks at number of autoposters
     gameState.masks = Math.min(gameState.masks, autoposters.length);
 
-    // Process existing masked bots - check if mask expired (10 seconds)
+    // Calculate mask duration based on upgrade
+    const maskDuration = gameState.maskUpgrade > 0 ? 20000 : 10000; // 20s or 10s
+    const immunityDuration = gameState.maskUpgrade > 0 ? 10000 : 5000; // 10s or 5s
+
+    // Process existing masked bots - check if mask expired
     autoposters.forEach(bot => {
         if (bot.classList.contains('masked')) {
             const maskTime = parseFloat(bot.dataset.maskTime || 0);
-            if (now - maskTime > 10000) {
-                // Mask expired
+            if (now - maskTime > maskDuration) {
+                // Mask expired - remove it and consume from mask count
                 bot.classList.remove('masked');
                 delete bot.dataset.maskTime;
+                // Set immunity period - bot is immune to infection for additional seconds
+                bot.dataset.immuneUntil = (now + immunityDuration).toString();
+                gameState.masks = Math.max(0, gameState.masks - 1);
             }
         }
     });
@@ -1160,6 +1698,7 @@ function purchaseUpgrade(upgradeKey) {
         'autoAutoPoster': 'autoAutoPosters',
         'mask': 'masks',
         'autoMasker': 'autoMaskers',
+        'maskUpgrade': 'maskUpgrade',
         'imagePoster': 'imagePosters',
         'videoPoster': 'videoPosters',
         'deepfakePoster': 'deepfakePosters',
@@ -1203,7 +1742,9 @@ function createParticle(value) {
     const container = document.getElementById('particles-container');
     const particle = document.createElement('div');
     particle.className = 'particle';
-    particle.textContent = '+' + formatMoney(value);
+    // Round to nearest dollar
+    const roundedValue = Math.round(value);
+    particle.textContent = '+$' + formatNumber(roundedValue);
 
     // Random position near the click button
     const clickButton = document.getElementById('click-area');
@@ -1220,7 +1761,8 @@ function createParticle(value) {
 
 function showAIContent() {
     const display = document.getElementById('ai-content-display');
-    const content = AI_CONTENT_SAMPLES[Math.floor(Math.random() * AI_CONTENT_SAMPLES.length)];
+    const samples = AI_CONTENT_SAMPLES[gameState.currentStage] || AI_CONTENT_SAMPLES[1];
+    const content = samples[Math.floor(Math.random() * samples.length)];
 
     display.textContent = '"' + content + '"';
     display.classList.add('visible');
@@ -1258,9 +1800,18 @@ function checkStageProgression() {
 function detectAndKillBots(deltaTime) {
     const container = document.getElementById('bots-container');
     const autoposters = Array.from(container.querySelectorAll('.autoposter:not(.destroying):not(.infected)'));
+    const now = Date.now();
 
-    // Only unmasked bots can be detected
-    const unmaskedBots = autoposters.filter(bot => !bot.classList.contains('masked'));
+    // Only unmasked bots can be detected (but not immune bots)
+    const unmaskedBots = autoposters.filter(bot => {
+        if (bot.classList.contains('masked')) return false;
+
+        // Check if bot has immunity period active
+        const immuneUntil = parseFloat(bot.dataset.immuneUntil || 0);
+        if (immuneUntil > now) return false; // Still immune
+
+        return true;
+    });
 
     if (unmaskedBots.length === 0) return;
 
@@ -1299,12 +1850,18 @@ function processInfections(deltaTime) {
         // 15% chance per second to spread infection to unmasked bots
         const spreadChance = 0.15 * deltaTime;
         if (Math.random() < spreadChance) {
-            // Find unmasked, uninfected bots
-            const vulnerableBots = autoposters.filter(bot =>
-                !bot.classList.contains('masked') &&
-                !bot.classList.contains('infected') &&
-                bot !== infectedBot
-            );
+            // Find unmasked, uninfected bots (excluding immune bots)
+            const vulnerableBots = autoposters.filter(bot => {
+                if (bot.classList.contains('masked')) return false;
+                if (bot.classList.contains('infected')) return false;
+                if (bot === infectedBot) return false;
+
+                // Check if bot has immunity period active
+                const immuneUntil = parseFloat(bot.dataset.immuneUntil || 0);
+                if (immuneUntil > now) return false; // Still immune
+
+                return true;
+            });
 
             if (vulnerableBots.length > 0) {
                 // Infect the nearest vulnerable bot
@@ -1318,10 +1875,16 @@ function processInfections(deltaTime) {
 
     // Small chance for initial infection on unmasked bots (0.5% per second)
     if (infectedBots.length === 0 && Math.random() < 0.005 * deltaTime) {
-        const vulnerableBots = autoposters.filter(bot =>
-            !bot.classList.contains('masked') &&
-            !bot.classList.contains('infected')
-        );
+        const vulnerableBots = autoposters.filter(bot => {
+            if (bot.classList.contains('masked')) return false;
+            if (bot.classList.contains('infected')) return false;
+
+            // Check if bot has immunity period active
+            const immuneUntil = parseFloat(bot.dataset.immuneUntil || 0);
+            if (immuneUntil > now) return false; // Still immune
+
+            return true;
+        });
 
         if (vulnerableBots.length > 0) {
             const targetBot = vulnerableBots[Math.floor(Math.random() * vulnerableBots.length)];
@@ -1493,12 +2056,28 @@ function exportSave() {
     const saveData = localStorage.getItem('aiClickerSave');
     if (saveData) {
         const encoded = btoa(saveData);
-        const textarea = document.getElementById('import-text');
+        const textarea = document.getElementById('export-text');
         textarea.value = encoded;
-        showModal('import-modal');
+        showModal('export-modal');
         textarea.select();
+    }
+}
+
+function copyExportToClipboard() {
+    const textarea = document.getElementById('export-text');
+    textarea.select();
+    textarea.setSelectionRange(0, 99999); // For mobile devices
+
+    try {
         document.execCommand('copy');
         showNotification('Save data copied to clipboard!');
+    } catch (err) {
+        // Fallback for modern browsers
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            showNotification('Save data copied to clipboard!');
+        }).catch(() => {
+            showNotification('Failed to copy. Please select and copy manually.');
+        });
     }
 }
 
@@ -1577,6 +2156,12 @@ function initializeEventListeners() {
 
     document.getElementById('import-cancel-btn').addEventListener('click', () => {
         hideModal('import-modal');
+    });
+
+    // Export modal buttons
+    document.getElementById('export-copy-btn').addEventListener('click', copyExportToClipboard);
+    document.getElementById('export-close-btn').addEventListener('click', () => {
+        hideModal('export-modal');
     });
 
     // Auto-save every 5 seconds
