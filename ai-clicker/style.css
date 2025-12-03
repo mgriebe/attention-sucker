@@ -774,24 +774,28 @@ body.stage-13 {
     }
 
     h1 {
-        font-size: 1.8em;
-        margin-bottom: 0;
+        font-size: 1.5em;
+        margin-bottom: 8px;
     }
 
-    /* Hide subtitle, add POST AI CONTENT text */
+    /* Keep subtitle visible - it's the story! */
     .subtitle {
-        display: none;
+        font-size: 0.75em;
+        line-height: 1.3;
+        margin-bottom: 10px;
     }
 
     header::after {
-        content: 'POST AI CONTENT';
+        content: 'TAP TO POST AI CONTENT';
         display: block;
-        margin-top: 8px;
-        font-size: 1em;
+        margin-top: 10px;
+        padding: 10px;
+        font-size: 0.9em;
         font-weight: bold;
         color: var(--neon-yellow);
         text-align: center;
         text-shadow: 0 0 10px var(--neon-yellow);
+        border-top: 2px solid var(--neon-yellow);
     }
 
     /* Stats - single row at very top */
