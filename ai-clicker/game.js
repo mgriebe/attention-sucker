@@ -69,6 +69,13 @@ const gameState = {
     }
 };
 
+// ============= HEX GRID SYSTEM =============
+let hexGridSimulation = null;
+let hexGridRenderer = null;
+let lastHexUpdateTime = Date.now();
+const HEX_UPDATE_INTERVAL = 100; // milliseconds
+const HEX_GRID_THRESHOLD = 1000; // Switch to hex grid at 1000+ total bots
+
 // ============= GAME CONFIGURATION =============
 const STAGES = [
     {
@@ -1447,6 +1454,9 @@ function updateButtonText() {
 }
 
 function updateBotIcons() {
+    // Skip if using hex grid view
+    if (shouldUseHexGrid()) return;
+
     const container = document.getElementById('bots-container');
     const targetAutoPosters = Math.floor(gameState.autoPosters);
     const targetAutoAutoPosters = Math.floor(gameState.autoAutoPosters);
@@ -1969,6 +1979,140 @@ function infectBot(bot) {
     }
 }
 
+// ============= HEX GRID MANAGEMENT =============
+
+function getTotalBots() {
+    return Math.floor(gameState.autoPosters + gameState.autoAutoPosters +
+                     gameState.imagePosters + gameState.videoPosters);
+}
+
+function shouldUseHexGrid() {
+    return getTotalBots() >= HEX_GRID_THRESHOLD;
+}
+
+function initializeHexGrid() {
+    if (hexGridSimulation !== null) return; // Already initialized
+
+    const canvas = document.getElementById('hex-grid-canvas');
+    const mainArea = canvas.parentElement;
+
+    // Set canvas size to match main area
+    const rect = mainArea.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    // Calculate initial rings
+    const totalBots = getTotalBots();
+    const rings = Math.min(Math.floor(Math.sqrt(totalBots)), 64);
+
+    // Create simulation and renderer
+    hexGridSimulation = new HexGridSimulation(rings);
+    hexGridRenderer = new HexGridRenderer(canvas, hexGridSimulation);
+
+    // Sync with current game state
+    hexGridSimulation.syncWithGameState(gameState);
+
+    // Setup step callback
+    hexGridSimulation.onStep(() => {
+        // Update game state when bots die
+        syncGameStateFromHexGrid();
+        hexGridRenderer.renderFrame();
+    });
+
+    hexGridSimulation.start();
+}
+
+function syncGameStateFromHexGrid() {
+    if (!hexGridSimulation) return;
+
+    const counts = hexGridSimulation.countBots();
+
+    // Update game state bot counts based on what's actually on the grid
+    // This handles bots that died from infection
+    if (counts.autoPosters < gameState.autoPosters) {
+        gameState.autoPosters = counts.autoPosters;
+    }
+    if (counts.autoAutoPosters < gameState.autoAutoPosters) {
+        gameState.autoAutoPosters = counts.autoAutoPosters;
+    }
+    if (counts.imagePosters < gameState.imagePosters) {
+        gameState.imagePosters = counts.imagePosters;
+    }
+    if (counts.videoPosters < gameState.videoPosters) {
+        gameState.videoPosters = counts.videoPosters;
+    }
+}
+
+function updateHexGrid(deltaTime) {
+    if (!hexGridSimulation || !hexGridRenderer) return;
+
+    const now = Date.now();
+
+    // Sync game state to hex grid (adds new bots, updates masks)
+    hexGridSimulation.syncWithGameState(gameState);
+
+    // Update grid size if needed
+    const totalBots = getTotalBots();
+    const requiredRings = Math.min(Math.floor(Math.sqrt(totalBots)), 64);
+    if (requiredRings !== hexGridSimulation.rings) {
+        hexGridSimulation.resize(requiredRings);
+        hexGridRenderer.updateGridSize();
+    }
+
+    // Run simulation step at regular intervals
+    if (now - lastHexUpdateTime >= HEX_UPDATE_INTERVAL) {
+        const postsPerSecond = calculateProductionRate();
+        hexGridSimulation.update(postsPerSecond);
+        lastHexUpdateTime = now;
+    }
+
+    // Always render
+    hexGridRenderer.renderFrame();
+}
+
+function switchToHexView() {
+    const canvas = document.getElementById('hex-grid-canvas');
+    const botsContainer = document.getElementById('bots-container');
+    const clickButton = document.getElementById('click-area');
+
+    // Hide bubble view
+    botsContainer.style.display = 'none';
+    clickButton.style.display = 'none';
+
+    // Show hex grid
+    canvas.classList.add('active');
+
+    // Initialize hex grid if not already done
+    if (!hexGridSimulation) {
+        initializeHexGrid();
+    }
+}
+
+function switchToBubbleView() {
+    const canvas = document.getElementById('hex-grid-canvas');
+    const botsContainer = document.getElementById('bots-container');
+    const clickButton = document.getElementById('click-area');
+
+    // Show bubble view
+    botsContainer.style.display = 'block';
+    clickButton.style.display = 'flex';
+
+    // Hide hex grid
+    canvas.classList.remove('active');
+}
+
+function updateViewMode() {
+    const useHexGrid = shouldUseHexGrid();
+    const canvas = document.getElementById('hex-grid-canvas');
+    const isHexGridActive = canvas.classList.contains('active');
+
+    if (useHexGrid && !isHexGridActive) {
+        switchToHexView();
+    } else if (!useHexGrid && isHexGridActive) {
+        switchToBubbleView();
+    }
+}
+
 // ============= GAME LOOP =============
 
 let lastLoopTime = Date.now();
@@ -1996,15 +2140,24 @@ function gameLoop() {
         gameState.masks += gameState.autoMaskers * deltaTime;
     }
 
-    // AutoBusters detect and kill bots (masked bots are protected)
-    const totalPostsPerSec = gameState.autoPosters + (gameState.imagePosters * 5);
-    if (totalPostsPerSec >= 30 && gameState.autoPosters > 0) {
-        detectAndKillBots(deltaTime);
-    }
+    // Update view mode (switch between bubble and hex grid)
+    updateViewMode();
 
-    // Bot infection system (when AutoBusters are active)
-    if (totalPostsPerSec >= 30) {
-        processInfections(deltaTime);
+    // AutoBusters detect and kill bots (masked bots are protected)
+    // Only run bubble view infection system if not using hex grid
+    const totalPostsPerSec = gameState.autoPosters + (gameState.imagePosters * 5);
+    if (!shouldUseHexGrid()) {
+        if (totalPostsPerSec >= 30 && gameState.autoPosters > 0) {
+            detectAndKillBots(deltaTime);
+        }
+
+        // Bot infection system (when AutoBusters are active)
+        if (totalPostsPerSec >= 30) {
+            processInfections(deltaTime);
+        }
+    } else {
+        // Update hex grid system
+        updateHexGrid(deltaTime);
     }
 
     // Update world state
@@ -2276,6 +2429,16 @@ function initializeEventListeners() {
 
     // Update ticker message every 15 seconds
     setInterval(updateTickerMessage, 15000);
+
+    // Handle window resize for hex grid
+    window.addEventListener('resize', () => {
+        if (hexGridRenderer && shouldUseHexGrid()) {
+            const canvas = document.getElementById('hex-grid-canvas');
+            const mainArea = canvas.parentElement;
+            const rect = mainArea.getBoundingClientRect();
+            hexGridRenderer.resize(rect.width, rect.height);
+        }
+    });
 }
 
 // ============= INITIALIZATION =============
