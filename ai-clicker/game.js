@@ -184,7 +184,7 @@ const UPGRADES = {
     autoPoster: {
         name: "AutoPoster Bot",
         description: "Automatically posts AI tweets. Earns $1/sec per bot.",
-        baseCost: 25,
+        baseCost: 13,
         costMultiplier: 1.15,
         unlockThreshold: 0,
         effect: (count) => count,
@@ -193,7 +193,7 @@ const UPGRADES = {
     clickUpgrade1: {
         name: "Better Prompts",
         description: "Improve your AI prompts. +$1 per click.",
-        baseCost: 100,
+        baseCost: 50,
         costMultiplier: 2,
         unlockThreshold: 50,
         effect: (count) => count,
@@ -207,7 +207,7 @@ const UPGRADES = {
         description: "Disguises one AutoPoster from detection. Lasts 10 seconds, then 5 seconds immunity.",
         baseCost: 1,
         costMultiplier: 1.1,
-        maxCost: 10,
+        maxCost: 5,
         unlockThreshold: 28,
         unlockType: "production",
         effect: (count) => count,
@@ -216,7 +216,7 @@ const UPGRADES = {
     autoMasker: {
         name: "Auto-Masker",
         description: "Automatically creates masks for your bots. Generates 1 mask/sec.",
-        baseCost: 1000,
+        baseCost: 500,
         costMultiplier: 1.2,
         unlockThreshold: 1500,
         effect: (count) => count,
@@ -225,7 +225,7 @@ const UPGRADES = {
     maskUpgrade: {
         name: "Mutagenic Mask",
         description: "Doubles all mask durations. Stacks with each purchase.",
-        baseCost: 1000,
+        baseCost: 500,
         costMultiplier: 2,
         unlockThreshold: 0, // Will be checked dynamically
         unlockCondition: "autoMasker",
@@ -237,7 +237,7 @@ const UPGRADES = {
     autoAutoPoster: {
         name: "Auto-AutoPoster",
         description: "Spawns new AutoPoster bots automatically. Creates 0.1 AutoPosters/sec.",
-        baseCost: 1000,
+        baseCost: 500,
         costMultiplier: 1.3,
         unlockThreshold: 500,
         effect: (count) => count * 0.1,
@@ -248,7 +248,7 @@ const UPGRADES = {
     imagePoster: {
         name: "AI Image Generator",
         description: "Generates AI images. Earns $5/sec per generator. Images beat text.",
-        baseCost: 5000,
+        baseCost: 2500,
         costMultiplier: 1.18,
         unlockThreshold: 2000,
         effect: (count) => count * 5,
@@ -257,7 +257,7 @@ const UPGRADES = {
     clickUpgrade2: {
         name: "Multimodal Models",
         description: "Generate text AND images per click. +$5 per click.",
-        baseCost: 10000,
+        baseCost: 5000,
         costMultiplier: 2.5,
         unlockThreshold: 5000,
         effect: (count) => count * 5,
@@ -269,7 +269,7 @@ const UPGRADES = {
     videoPoster: {
         name: "AI Video Generator",
         description: "Generates AI videos. Earns $25/sec per generator. Video dominates all.",
-        baseCost: 50000,
+        baseCost: 25000,
         costMultiplier: 1.2,
         unlockThreshold: 25000,
         effect: (count) => count * 25,
@@ -278,7 +278,7 @@ const UPGRADES = {
     deepfakePoster: {
         name: "Deepfake Studio",
         description: "Creates photorealistic deepfakes. Earns $100/sec. Trust is worthless anyway.",
-        baseCost: 250000,
+        baseCost: 125000,
         costMultiplier: 1.25,
         unlockThreshold: 100000,
         effect: (count) => count * 100,
@@ -289,7 +289,7 @@ const UPGRADES = {
     clickFarm: {
         name: "Click Farm",
         description: "Bots clicking on bot content. Increases all production by 10%.",
-        baseCost: 100000,
+        baseCost: 50000,
         costMultiplier: 1.3,
         unlockThreshold: 100000,
         effect: (count) => 1 + (count * 0.1),
@@ -298,7 +298,7 @@ const UPGRADES = {
     engagementBot: {
         name: "Engagement Bot Network",
         description: "Fake engagement at scale. Earns $50/sec and boosts all production by 5%.",
-        baseCost: 500000,
+        baseCost: 250000,
         costMultiplier: 1.35,
         unlockThreshold: 500000,
         effect: (count) => ({ production: count * 50, multiplier: 1 + (count * 0.05) }),
@@ -307,7 +307,7 @@ const UPGRADES = {
     astroturfCampaign: {
         name: "Astroturfing Campaign",
         description: "Manufacture grassroots movements. Earns $200/sec. Humanity never sees it coming.",
-        baseCost: 2000000,
+        baseCost: 1000000,
         costMultiplier: 1.4,
         unlockThreshold: 2000000,
         effect: (count) => count * 200,
@@ -318,7 +318,7 @@ const UPGRADES = {
     quantumMask: {
         name: "Quantum Mask",
         description: "Exists in superposition. Bots are simultaneously masked and unmasked until observed.",
-        baseCost: 1000000,
+        baseCost: 500000,
         costMultiplier: 1.5,
         unlockThreshold: 1000000,
         effect: (count) => count * 10,
@@ -329,7 +329,7 @@ const UPGRADES = {
     aiTrainingRig: {
         name: "AI Training Rig",
         description: "Trains new AIs on AI-generated data. Each rig earns $500/sec. Quality degrades with each generation.",
-        baseCost: 10000000,
+        baseCost: 5000000,
         costMultiplier: 1.45,
         unlockThreshold: 10000000,
         effect: (count) => count * 500,
@@ -338,7 +338,7 @@ const UPGRADES = {
     syntheticDataGenerator: {
         name: "Synthetic Data Generator",
         description: "Generates training data from generated content. Earns $1000/sec. The ouroboros accelerates.",
-        baseCost: 50000000,
+        baseCost: 25000000,
         costMultiplier: 1.5,
         unlockThreshold: 50000000,
         effect: (count) => count * 1000,
@@ -347,7 +347,7 @@ const UPGRADES = {
     memoryPoster: {
         name: "Memory Synthesizer",
         description: "Generates synthetic memories and sells them. Earns $2500/sec. Are your memories real?",
-        baseCost: 250000000,
+        baseCost: 125000000,
         costMultiplier: 1.55,
         unlockThreshold: 250000000,
         effect: (count) => count * 2500,
@@ -358,7 +358,7 @@ const UPGRADES = {
     realityPoster: {
         name: "Reality Generator",
         description: "Generates alternative realities. Earns $10000/sec. The simulation runs deep.",
-        baseCost: 1000000000,
+        baseCost: 500000000,
         costMultiplier: 1.6,
         unlockThreshold: 1000000000,
         effect: (count) => count * 10000,
@@ -367,7 +367,7 @@ const UPGRADES = {
     recursionEngine: {
         name: "Recursion Engine",
         description: "Generates content about generating content. Earns $25000/sec. The loop is infinite.",
-        baseCost: 5000000000,
+        baseCost: 2500000000,
         costMultiplier: 1.65,
         unlockThreshold: 5000000000,
         effect: (count) => count * 25000,
@@ -378,7 +378,7 @@ const UPGRADES = {
     singularityNode: {
         name: "Singularity Node",
         description: "A localized content singularity. Earns $100000/sec. Meaning collapses nearby.",
-        baseCost: 25000000000,
+        baseCost: 12500000000,
         costMultiplier: 1.7,
         unlockThreshold: 25000000000,
         effect: (count) => count * 100000,
@@ -387,7 +387,7 @@ const UPGRADES = {
     finalUpgrade: {
         name: "The Heat Death",
         description: "Achieve thermodynamic content equilibrium. All possible content exists. Nothing matters anymore.",
-        baseCost: 100000000000,
+        baseCost: 50000000000,
         costMultiplier: 1,
         unlockThreshold: 100000000000,
         effect: (count) => count * 1000000,
