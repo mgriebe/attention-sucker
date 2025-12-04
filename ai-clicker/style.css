@@ -876,10 +876,10 @@ body.stage-13 {
         max-width: 100%;
     }
 
-    /* Upgrades sidebar - two columns on mobile */
+    /* Upgrades sidebar - two columns on mobile, 3 rows visible */
     .left-sidebar {
         order: 2;
-        max-height: 400px;
+        max-height: 600px;
         overflow-y: auto;
     }
 
