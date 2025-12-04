@@ -807,22 +807,22 @@ body.stage-13 {
     /* Header - below stats bar */
     header {
         margin-top: 35px;
-        padding: 20px 15px;
+        padding: 15px 10px;
         margin-bottom: 0;
         border-bottom: 3px solid var(--neon-blue);
         position: relative;
     }
 
     h1 {
-        font-size: 2em;
-        margin-bottom: 5px;
-        letter-spacing: 2px;
+        font-size: 2.5em;
+        margin-bottom: 3px;
+        letter-spacing: 1px;
     }
 
     /* Keep subtitle visible - it's the story! */
     .subtitle {
-        font-size: 0.9em;
-        line-height: 1.2;
+        font-size: 1em;
+        line-height: 1.1;
         margin-bottom: 0;
     }
 
@@ -876,7 +876,7 @@ body.stage-13 {
         max-width: 100%;
     }
 
-    /* Upgrades sidebar - collapsible on mobile */
+    /* Upgrades sidebar - two columns on mobile */
     .left-sidebar {
         order: 2;
         max-height: 400px;
@@ -890,6 +890,13 @@ body.stage-13 {
         z-index: 10;
         padding: 10px;
         margin: -10px -10px 10px -10px;
+    }
+
+    /* Two column layout for upgrades */
+    .upgrades-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
     }
 
     /* Stats sidebar - at bottom */
@@ -912,23 +919,26 @@ body.stage-13 {
         font-size: 1em;
     }
 
-    /* Upgrade cards - single column on mobile */
-    .upgrade-card {
-        padding: 12px;
-        margin-bottom: 8px;
+    /* Upgrade cards - two columns on mobile */
+    .upgrade-item {
+        padding: 10px;
+        margin-bottom: 0;
     }
 
     .upgrade-name {
-        font-size: 1em;
+        font-size: 0.9em;
     }
 
     .upgrade-description {
-        font-size: 0.85em;
+        font-size: 0.75em;
     }
 
-    .upgrade-cost,
-    .upgrade-owned {
-        font-size: 0.85em;
+    .upgrade-cost {
+        font-size: 0.8em;
+    }
+
+    .upgrade-count {
+        font-size: 0.75em;
     }
 
     /* Control buttons - stack vertically */
