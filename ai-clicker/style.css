@@ -854,15 +854,12 @@ body.stage-13 {
     .main-area::before {
         content: 'TAP TO POST AI CONTENT';
         display: block;
-        padding: 20px 30px;
-        font-size: 1.2em;
+        font-size: 1.5em;
         font-weight: bold;
         color: var(--neon-yellow);
         text-align: center;
-        text-shadow: 0 0 15px var(--neon-yellow);
-        border: 3px solid var(--neon-yellow);
-        border-radius: 10px;
-        background: rgba(0, 0, 0, 0.7);
+        text-shadow: 0 0 20px var(--neon-yellow);
+        opacity: 0.3;
         z-index: 1;
         position: relative;
     }
