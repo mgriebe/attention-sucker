@@ -1605,11 +1605,11 @@ function createBotIcon(type) {
         }
     }
 
-    // Debug logging
-    console.log('Bot positioning - containerWidth:', containerWidth, 'containerHeight:', containerHeight, 'window.innerWidth:', window.innerWidth);
-
     const centerX = containerWidth / 2;
     const centerY = containerHeight / 2;
+
+    // On mobile, there's no big button in the center, so reduce exclusion zone
+    const exclusionRadius = window.innerWidth <= 768 ? 80 : 200;
 
     let x, y, distanceFromCenter;
     do {
@@ -1617,11 +1617,9 @@ function createBotIcon(type) {
         // Keep bots below the stats area (start at 50px from top on mobile)
         const topOffset = window.innerWidth <= 768 ? 50 : 150;
         y = topOffset + Math.random() * (containerHeight - topOffset - 60);
-        // Check if too close to center (where button is)
+        // Check if too close to center (where tap instruction is)
         distanceFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-    } while (distanceFromCenter < 200); // Keep bots away from button
-
-    console.log('Bot created at x:', x, 'y:', y);
+    } while (distanceFromCenter < exclusionRadius);
 
     bot.style.left = x + 'px';
     bot.style.top = y + 'px';
