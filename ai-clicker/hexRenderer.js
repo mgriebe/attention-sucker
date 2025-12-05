@@ -2,6 +2,7 @@
  * Hex Grid Renderer for AI Clicker
  * Handles visualization of the hexagonal bot grid on HTML5 Canvas
  * Uses flat-top hexagons with axial coordinates
+ * Supports hemisphere projection for Stage 7+
  */
 
 class HexGridRenderer {
@@ -10,16 +11,21 @@ class HexGridRenderer {
         this.ctx = canvas.getContext('2d');
         this.simulation = simulation;
 
+        // Hemisphere projection mode (enabled at Stage 7)
+        this.hemisphereMode = false;
+        this.hemisphereExtent = 0.75; // 75% of hemisphere (67.5 degrees)
+
         // Calculate hex size to fit the hexagonal grid in the canvas
         this.calculateHexDimensions();
 
-        // Color scheme for different bot types
+        // Color scheme for different bot types (matching bubble view)
         this.colors = {
             EMPTY: '#2a2a3e',                    // Dark gray for empty cells
-            BOT_AUTOPOSTER: '#00ff41',           // Neon green
-            BOT_AUTO_AUTOPOSTER: '#8B0000',      // Dark red/maroon
-            BOT_IMAGE_GENERATOR: '#00f5ff',      // Neon blue
+            BOT_AUTOPOSTER: '#00ff41',           // Neon green (bubble: green/blue gradient)
+            BOT_AUTO_AUTOPOSTER: '#ff006e',      // Neon pink (bubble: pink/purple gradient)
+            BOT_IMAGE_GENERATOR: '#ffff00',      // Neon yellow (bubble: yellow/orange gradient)
             BOT_VIDEO_GENERATOR: '#b800e6',      // Neon purple
+            BOT_DEEPFAKE_STUDIO: '#00bfff',      // Neon blue
             INFECTED: '#ff4500',                 // Orange-red fire
             RECENTLY_INFECTED: '#ffa500',        // Orange
             BACKGROUND: '#1a1a2e',               // Dark background
@@ -41,16 +47,28 @@ class HexGridRenderer {
     }
 
     /**
+     * Enable or disable hemisphere projection mode
+     */
+    setHemisphereMode(enabled) {
+        this.hemisphereMode = enabled;
+        this.calculateHexDimensions();
+        this.hexVertices = this.calculateHexVertices();
+    }
+
+    /**
      * Calculate hex dimensions to fit the grid in the canvas
      * Using flat-top hexagons
      */
     calculateHexDimensions() {
         const rings = this.simulation.rings;
 
-        // Calculate size to fit in canvas with some padding
-        const padding = 20;
-        const availableWidth = this.canvas.width - 2 * padding;
-        const availableHeight = this.canvas.height - 2 * padding;
+        // Calculate size to fit in canvas with padding
+        // Extra padding at top for stats display, and sides for margins
+        const paddingHorizontal = 30;
+        const paddingTop = 80; // Extra space for stats display
+        const paddingBottom = 30;
+        const availableWidth = this.canvas.width - 2 * paddingHorizontal;
+        const availableHeight = this.canvas.height - paddingTop - paddingBottom;
 
         // For flat-top hex grid with N rings:
         const sizeFromWidth = availableWidth / (3 * rings + 1);
@@ -60,9 +78,64 @@ class HexGridRenderer {
         this.hexWidth = 2 * this.hexSize;
         this.hexHeight = Math.sqrt(3) * this.hexSize;
 
-        // Center offset to place grid in middle of canvas
+        // Center offset - shift down slightly to account for top padding
         this.centerX = this.canvas.width / 2;
-        this.centerY = this.canvas.height / 2;
+        this.centerY = paddingTop + (availableHeight / 2);
+
+        // Hemisphere projection parameters
+        // The flat grid radius (distance from center to outermost hex)
+        this.flatRadius = this.hexSize * (3/2 * this.simulation.rings + 0.5);
+        // The projected dome radius on screen
+        this.domeRadius = Math.min(availableWidth, availableHeight) / 2;
+    }
+
+    /**
+     * Project a point from flat grid space onto a hemisphere
+     * Input: (x, y) relative to grid center in flat space
+     * Output: (x, y) projected position on screen
+     */
+    projectToHemisphere(flatX, flatY) {
+        // Normalize to unit disk (0 to 1 from center to edge)
+        const flatDist = Math.sqrt(flatX * flatX + flatY * flatY);
+
+        if (flatDist === 0) {
+            return { x: 0, y: 0 };
+        }
+
+        // Normalize distance to 0-1 range based on grid extent
+        const normalizedDist = Math.min(flatDist / this.flatRadius, 1);
+
+        // Map flat disk to partial hemisphere using equidistant azimuthal projection
+        // hemisphereExtent controls how much of the hemisphere we use
+        // At extent=1.0, edge maps to 90 degrees (full hemisphere)
+        // At extent=0.75, edge maps to 67.5 degrees
+        const maxTheta = (Math.PI / 2) * this.hemisphereExtent;
+        const theta = normalizedDist * maxTheta;
+        const projectedDist = Math.sin(theta) * this.domeRadius / Math.sin(maxTheta);
+
+        // Maintain the same direction, just change the distance
+        const scale = projectedDist / flatDist;
+
+        return {
+            x: flatX * scale,
+            y: flatY * scale
+        };
+    }
+
+    /**
+     * Get the scale factor at a given flat position for sizing hexes
+     * Hexes near center appear larger, hexes near edge appear smaller
+     */
+    getProjectionScale(flatX, flatY) {
+        const flatDist = Math.sqrt(flatX * flatX + flatY * flatY);
+        const normalizedDist = Math.min(flatDist / this.flatRadius, 1);
+
+        // The derivative of sin(theta) is cos(theta)
+        // Scale factor is cos(angle) - this gives us how much the projection
+        // compresses/expands at each point
+        const maxTheta = (Math.PI / 2) * this.hemisphereExtent;
+        const theta = normalizedDist * maxTheta;
+        return Math.cos(theta) * (this.domeRadius / this.flatRadius) / Math.sin(maxTheta);
     }
 
     /**
@@ -115,6 +188,9 @@ class HexGridRenderer {
             case CellState.BOT_VIDEO_GENERATOR:
                 baseColor = this.colors.BOT_VIDEO_GENERATOR;
                 break;
+            case CellState.BOT_DEEPFAKE_STUDIO:
+                baseColor = this.colors.BOT_DEEPFAKE_STUDIO;
+                break;
             case CellState.INFECTED:
                 return this.colors.INFECTED;
             case CellState.RECENTLY_INFECTED:
@@ -153,9 +229,9 @@ class HexGridRenderer {
     }
 
     /**
-     * Draw a single hexagon at the given center position
+     * Draw a single hexagon at the given center position (flat mode)
      */
-    drawHexagon(ctx, centerX, centerY, color) {
+    drawHexagonFlat(ctx, centerX, centerY, color) {
         ctx.fillStyle = color;
         ctx.beginPath();
 
@@ -163,6 +239,43 @@ class HexGridRenderer {
             const vertex = this.hexVertices[i];
             const x = centerX + vertex.x;
             const y = centerY + vertex.y;
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+
+        ctx.closePath();
+        ctx.fill();
+
+        // Add a subtle border for better visibility
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+    }
+
+    /**
+     * Draw a single hexagon with hemisphere projection
+     * flatCenterX, flatCenterY are in flat grid space (relative to grid center)
+     */
+    drawHexagonHemisphere(ctx, flatCenterX, flatCenterY, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+
+        for (let i = 0; i < 6; i++) {
+            // Calculate vertex position in flat space
+            const angle = (Math.PI / 3) * i;
+            const flatVertexX = flatCenterX + this.hexSize * Math.cos(angle);
+            const flatVertexY = flatCenterY + this.hexSize * Math.sin(angle);
+
+            // Project the vertex onto the hemisphere
+            const projected = this.projectToHemisphere(flatVertexX, flatVertexY);
+
+            // Convert to screen coordinates
+            const x = this.centerX + projected.x;
+            const y = this.centerY + projected.y;
 
             if (i === 0) {
                 ctx.moveTo(x, y);
@@ -197,11 +310,20 @@ class HexGridRenderer {
             const isMasked = this.simulation.isCellMasked(q, r);
             const color = this.getColor(state, isMasked);
 
-            // Calculate hexagon center position
-            const { x, y } = this.axialToPixel(q, r);
+            if (this.hemisphereMode) {
+                // Calculate flat grid position (relative to center)
+                const flatX = this.hexSize * (3/2 * q);
+                const flatY = this.hexSize * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r);
 
-            // Draw the hexagon
-            this.drawHexagon(ctx, x, y, color);
+                // Draw the hexagon with hemisphere projection
+                this.drawHexagonHemisphere(ctx, flatX, flatY, color);
+            } else {
+                // Calculate hexagon center position (flat mode)
+                const { x, y } = this.axialToPixel(q, r);
+
+                // Draw the hexagon
+                this.drawHexagonFlat(ctx, x, y, color);
+            }
         }
 
         // Copy offscreen canvas to visible canvas

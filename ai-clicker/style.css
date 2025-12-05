@@ -220,6 +220,8 @@ h1 {
     flex-wrap: wrap;
     justify-content: center;
     width: 100%;
+    position: relative;
+    z-index: 15;
 }
 
 .stat-item {
@@ -324,6 +326,38 @@ h1 {
 }
 
 #hex-grid-canvas.active {
+    display: block;
+}
+
+/* Hex mode click button - bottom left corner of play area */
+.hex-click-button {
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 10;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    border: 2px solid var(--neon-pink);
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--neon-pink);
+    transition: all 0.2s ease;
+}
+
+.hex-click-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px var(--neon-pink);
+}
+
+.hex-click-button:active {
+    transform: scale(0.95);
+}
+
+.hex-click-button.active {
     display: block;
 }
 

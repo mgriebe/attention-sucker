@@ -20,6 +20,7 @@ const gameState = {
     // Purchase tracking (for pricing)
     autoPostersPurchased: 0,
     masksPurchased: 0,
+    videoPostersPurchased: 0,
 
     // Defense/evasion
     masks: 0,
@@ -58,6 +59,7 @@ const gameState = {
     // Time tracking
     lastUpdate: Date.now(),
     totalPlayTime: 0,
+    stage6EnteredTime: null, // When Stage 6 was first reached
 
     // Flags for one-time events
     flags: {
@@ -66,6 +68,10 @@ const gameState = {
         seenTrustCollapse: false,
         seenRealityBreak: false,
         seenFirstInfection: false,
+        seenFirstDetection: false, // First bot detection event (unlocks masks)
+        quantumMaskPurchased: false, // Permanent hex grid mode, new detection rules
+        qkdLinkPurchased: false, // Halves detection rate
+        trustedRelaysPurchased: false, // Quarters detection rate
     }
 };
 
@@ -75,6 +81,8 @@ let hexGridRenderer = null;
 let lastHexUpdateTime = Date.now();
 const HEX_UPDATE_INTERVAL = 100; // milliseconds
 const HEX_GRID_THRESHOLD = 1000; // Switch to hex grid at 1000+ total bots
+const HEX_GRID_EXIT_THRESHOLD = 300; // Only exit hex grid when below this
+let hexGridModeActive = false; // Track if we've entered hex grid mode
 
 // ============= GAME CONFIGURATION =============
 const STAGES = [
@@ -88,43 +96,48 @@ const STAGES = [
     {
         id: 2,
         name: "The Automation Era",
-        threshold: 100,
+        threshold: 6,
+        thresholdType: "autoPosters", // Triggers after 6th AutoPoster purchase
         description: "Manual posting is for chumps. You've built a fleet of AutoPosters that work 24/7. Your content empire is growing exponentially. The platforms haven't noticed yet.",
         color: "stage-2"
     },
     {
         id: 3,
         name: "The Detection Wars",
-        threshold: 30,
-        thresholdType: "production",
+        threshold: 20,
+        thresholdType: "production", // Triggers at 20 posts/sec
         description: "The platforms have deployed AutoBusters. Your bots are being identified and banned. But for every detection algorithm, there's a counter-measure. The arms race has begun.",
         color: "stage-3"
     },
     {
         id: 4,
         name: "The Mask Economy",
-        threshold: 5000,
+        threshold: 4,
+        thresholdType: "autoMaskers", // Triggers after 4th Auto-masker purchase
         description: "Masks are now more valuable than content. Everyone is masking everyone. The platforms can't tell who's real anymore. Neither can you.",
         color: "stage-4"
     },
     {
         id: 5,
         name: "The Image Flood",
-        threshold: 25000,
+        threshold: 1,
+        thresholdType: "imagePostersAfterStage4", // Triggers after Stage 4 + next Image Generator purchase
         description: "Text is dead. Images are the new currency. Your AI generates thousands of pictures per second. None of them are real. All of them get engagement. Human artists have stopped posting.",
         color: "stage-5"
     },
     {
         id: 6,
         name: "The Video Deluge",
-        threshold: 100000,
+        threshold: 1,
+        thresholdType: "videoAfterStage5WithMutagenic", // Stage 5 + Mutagenic Mask + Video Generator
         description: "The feeds are drowning in AI video. Deepfakes are indistinguishable from reality. News anchors, celebrities, politicians—all of them can be anyone now. Trust is a quaint memory.",
         color: "stage-6"
     },
     {
         id: 7,
         name: "The Engagement Apocalypse",
-        threshold: 500000,
+        threshold: 30, // 30 seconds in Stage 6 + market value < 45%
+        thresholdType: "stage6TimeAndMarketValue",
         description: "Real humans stopped engaging weeks ago. Your bots engage with other bots. The click farms click on engagement farms. It's bots all the way down. The money is still real though.",
         color: "stage-7"
     },
@@ -202,7 +215,7 @@ const UPGRADES = {
         description: "Improve your AI prompts. +$1 per click.",
         baseCost: 50,
         costMultiplier: 2,
-        unlockThreshold: 50,
+        unlockThreshold: 25,
         effect: (count) => count,
         type: "click",
         maxPurchases: 10
@@ -215,8 +228,8 @@ const UPGRADES = {
         baseCost: 1,
         costMultiplier: 1.1,
         maxCost: 5,
-        unlockThreshold: 28,
-        unlockType: "production",
+        unlockThreshold: 0,
+        unlockType: "firstDetection", // Unlocks after first bot detection event
         effect: (count) => count,
         type: "defense"
     },
@@ -225,12 +238,13 @@ const UPGRADES = {
         description: "Automatically creates masks for your bots. Generates 1 mask/sec.",
         baseCost: 500,
         costMultiplier: 1.2,
-        unlockThreshold: 1500,
+        unlockThreshold: 25,
+        unlockType: "masksPurchased", // Unlocks after 25 mask purchases
         effect: (count) => count,
         type: "automation"
     },
     maskUpgrade: {
-        name: "Mutagenic Mask",
+        name: "Encrypt Bits",
         description: "Doubles all mask durations. Stacks with each purchase.",
         baseCost: 500,
         costMultiplier: 2,
@@ -246,7 +260,7 @@ const UPGRADES = {
         description: "Spawns new AutoPoster bots automatically. Creates 0.1 AutoPosters/sec.",
         baseCost: 500,
         costMultiplier: 1.3,
-        unlockThreshold: 500,
+        unlockThreshold: 250,
         effect: (count) => count * 0.1,
         type: "meta"
     },
@@ -257,19 +271,19 @@ const UPGRADES = {
         description: "Generates AI images. Earns $5/sec per generator. Images beat text.",
         baseCost: 2500,
         costMultiplier: 1.18,
-        unlockThreshold: 2000,
+        unlockThreshold: 1000,
         effect: (count) => count * 5,
         type: "automation"
     },
     clickUpgrade2: {
-        name: "Multimodal Models",
-        description: "Generate text AND images per click. +$5 per click.",
+        name: "AI Game Spawner",
+        description: "Use AI to generate entire games! +$50 per click. What's more engaging than a game?",
         baseCost: 5000,
         costMultiplier: 2.5,
-        unlockThreshold: 5000,
-        effect: (count) => count * 5,
+        unlockThreshold: 2500,
+        effect: (count) => count * 50,
         type: "click",
-        maxPurchases: 5
+        maxPurchases: 1
     },
 
     // Stage 6 - Video content
@@ -278,18 +292,18 @@ const UPGRADES = {
         description: "Generates AI videos. Earns $25/sec per generator. Video dominates all.",
         baseCost: 25000,
         costMultiplier: 1.2,
-        unlockThreshold: 25000,
+        unlockThreshold: 12500,
         effect: (count) => count * 25,
         type: "automation"
     },
     deepfakePoster: {
         name: "Deepfake Studio",
-        description: "Creates photorealistic deepfakes. Earns $100/sec. Trust is worthless anyway.",
+        description: "Manufactures AI Video Generators. Creates 1 Video Generator/sec. Trust is worthless anyway.",
         baseCost: 125000,
         costMultiplier: 1.25,
-        unlockThreshold: 100000,
-        effect: (count) => count * 100,
-        type: "automation"
+        unlockThreshold: 50000,
+        effect: (count) => count * 1, // Spawns 1 Video Generator per second
+        type: "spawner"
     },
 
     // Stage 7 - Engagement systems
@@ -298,7 +312,7 @@ const UPGRADES = {
         description: "Bots clicking on bot content. Increases all production by 10%.",
         baseCost: 50000,
         costMultiplier: 1.3,
-        unlockThreshold: 100000,
+        unlockThreshold: 50000,
         effect: (count) => 1 + (count * 0.1),
         type: "multiplier"
     },
@@ -307,7 +321,7 @@ const UPGRADES = {
         description: "Fake engagement at scale. Earns $50/sec and boosts all production by 5%.",
         baseCost: 250000,
         costMultiplier: 1.35,
-        unlockThreshold: 500000,
+        unlockThreshold: 250000,
         effect: (count) => ({ production: count * 50, multiplier: 1 + (count * 0.05) }),
         type: "hybrid"
     },
@@ -316,7 +330,7 @@ const UPGRADES = {
         description: "Manufacture grassroots movements. Earns $200/sec. Humanity never sees it coming.",
         baseCost: 1000000,
         costMultiplier: 1.4,
-        unlockThreshold: 2000000,
+        unlockThreshold: 1000000,
         effect: (count) => count * 200,
         type: "automation"
     },
@@ -325,11 +339,36 @@ const UPGRADES = {
     quantumMask: {
         name: "Quantum Mask",
         description: "Exists in superposition. Bots are simultaneously masked and unmasked until observed.",
-        baseCost: 500000,
+        baseCost: 75000,
         costMultiplier: 1.5,
-        unlockThreshold: 1000000,
+        unlockThreshold: 35000,
+        unlockType: "moneyAndStage",
+        unlockStage: 5,
         effect: (count) => count * 10,
-        type: "defense"
+        type: "defense",
+        maxPurchases: 1
+    },
+    qkdLink: {
+        name: "QKD Link Hardware",
+        description: "Quantum Key Distribution link. Halves detection rate permanently. Unhackable.",
+        baseCost: 50000,
+        costMultiplier: 1,
+        unlockThreshold: 45000,
+        unlockType: "moneyAndQuantumMask",
+        effect: (count) => count,
+        type: "defense",
+        maxPurchases: 1
+    },
+    trustedRelays: {
+        name: "Trusted Relays",
+        description: "Now... Unhackable.",
+        baseCost: 50000,
+        costMultiplier: 1,
+        unlockThreshold: 45000,
+        unlockType: "moneyAndQkdLink",
+        effect: (count) => count,
+        type: "defense",
+        maxPurchases: 1
     },
 
     // Stage 10-11 - Meta content generation
@@ -338,7 +377,7 @@ const UPGRADES = {
         description: "Trains new AIs on AI-generated data. Each rig earns $500/sec. Quality degrades with each generation.",
         baseCost: 5000000,
         costMultiplier: 1.45,
-        unlockThreshold: 10000000,
+        unlockThreshold: 2500000,
         effect: (count) => count * 500,
         type: "automation"
     },
@@ -347,7 +386,7 @@ const UPGRADES = {
         description: "Generates training data from generated content. Earns $1000/sec. The ouroboros accelerates.",
         baseCost: 25000000,
         costMultiplier: 1.5,
-        unlockThreshold: 50000000,
+        unlockThreshold: 12500000,
         effect: (count) => count * 1000,
         type: "automation"
     },
@@ -356,7 +395,7 @@ const UPGRADES = {
         description: "Generates synthetic memories and sells them. Earns $2500/sec. Are your memories real?",
         baseCost: 125000000,
         costMultiplier: 1.55,
-        unlockThreshold: 250000000,
+        unlockThreshold: 62500000,
         effect: (count) => count * 2500,
         type: "automation"
     },
@@ -367,7 +406,7 @@ const UPGRADES = {
         description: "Generates alternative realities. Earns $10000/sec. The simulation runs deep.",
         baseCost: 500000000,
         costMultiplier: 1.6,
-        unlockThreshold: 1000000000,
+        unlockThreshold: 250000000,
         effect: (count) => count * 10000,
         type: "automation"
     },
@@ -376,7 +415,7 @@ const UPGRADES = {
         description: "Generates content about generating content. Earns $25000/sec. The loop is infinite.",
         baseCost: 2500000000,
         costMultiplier: 1.65,
-        unlockThreshold: 5000000000,
+        unlockThreshold: 1250000000,
         effect: (count) => count * 25000,
         type: "automation"
     },
@@ -387,7 +426,7 @@ const UPGRADES = {
         description: "A localized content singularity. Earns $100000/sec. Meaning collapses nearby.",
         baseCost: 12500000000,
         costMultiplier: 1.7,
-        unlockThreshold: 25000000000,
+        unlockThreshold: 6250000000,
         effect: (count) => count * 100000,
         type: "automation"
     },
@@ -396,7 +435,7 @@ const UPGRADES = {
         description: "Achieve thermodynamic content equilibrium. All possible content exists. Nothing matters anymore.",
         baseCost: 50000000000,
         costMultiplier: 1,
-        unlockThreshold: 100000000000,
+        unlockThreshold: 25000000000,
         effect: (count) => count * 1000000,
         type: "automation",
         maxPurchases: 1
@@ -1150,7 +1189,7 @@ const AI_CONTENT_SAMPLES = {
 
 function calculateMarketValue() {
     const postsPerSecond = calculateProductionRate();
-    const marketValue = 500000 / (500000 + postsPerSecond);
+    const marketValue = 10000 / (10000 + postsPerSecond);
     return marketValue;
 }
 
@@ -1166,7 +1205,7 @@ function calculateProductionRate() {
     // Other automation
     baseProduction += gameState.imagePosters * 5;
     baseProduction += gameState.videoPosters * 25;
-    baseProduction += gameState.deepfakePosters * 100;
+    // Deepfake Studios don't produce directly - they spawn Video Generators
     baseProduction += gameState.astroturfCampaigns * 200;
     baseProduction += gameState.aiTrainingRigs * 500;
     baseProduction += gameState.syntheticDataGenerators * 1000;
@@ -1211,7 +1250,7 @@ function calculateClickValue() {
     const clickUpgrade2Count = getUpgradeCount('clickUpgrade2');
 
     value += clickUpgrade1Count;
-    value += clickUpgrade2Count * 5;
+    value += clickUpgrade2Count * 50;
 
     // Market value affects clicks too
     const marketValue = calculateMarketValue();
@@ -1222,6 +1261,17 @@ function calculateClickValue() {
 }
 
 function getUpgradeCount(upgradeKey) {
+    // Flag-based upgrades (one-time purchases stored in gameState.flags)
+    const flagMap = {
+        'quantumMask': 'quantumMaskPurchased',
+        'qkdLink': 'qkdLinkPurchased',
+        'trustedRelays': 'trustedRelaysPurchased'
+    };
+
+    if (flagMap[upgradeKey]) {
+        return gameState.flags[flagMap[upgradeKey]] ? 1 : 0;
+    }
+
     // Map upgrade keys to gameState properties
     const propertyMap = {
         'autoPoster': 'autoPosters',
@@ -1233,7 +1283,6 @@ function getUpgradeCount(upgradeKey) {
         'realityPoster': 'realityPosters',
         'mask': 'masks',
         'autoMasker': 'autoMaskers',
-        'quantumMask': 'quantumMasks',
         'clickFarm': 'clickFarms',
         'engagementBot': 'engagementBots',
         'astroturfCampaign': 'astroturfCampaigns',
@@ -1253,12 +1302,15 @@ function getUpgradeCount(upgradeKey) {
 
 function getUpgradeCost(upgradeKey) {
     const upgrade = UPGRADES[upgradeKey];
-    // For autoPosters and masks, use purchase count instead of total count
+    // For autoPosters, masks, and videoPosters, use purchase count instead of total count
+    // (since spawners can create these without purchasing)
     let count;
     if (upgradeKey === 'autoPoster') {
         count = gameState.autoPostersPurchased;
     } else if (upgradeKey === 'mask') {
         count = gameState.masksPurchased;
+    } else if (upgradeKey === 'videoPoster') {
+        count = gameState.videoPostersPurchased;
     } else {
         count = getUpgradeCount(upgradeKey);
     }
@@ -1289,11 +1341,31 @@ function isUpgradeUnlocked(upgradeKey) {
         if (requiredUpgradeCount === 0) return false;
     }
 
-    // Check threshold based on type (money or production)
-    if (upgrade.unlockType === "production") {
-        return calculateProductionRate() >= upgrade.unlockThreshold;
-    } else {
-        return gameState.money >= upgrade.unlockThreshold;
+    // Check threshold based on unlock type
+    switch (upgrade.unlockType) {
+        case "production":
+            return calculateProductionRate() >= upgrade.unlockThreshold;
+        case "firstDetection":
+            // Mask unlocks after first bot detection event
+            return gameState.flags.seenFirstDetection === true;
+        case "masksPurchased":
+            // Auto-masker unlocks after purchasing 25 masks
+            return gameState.masksPurchased >= upgrade.unlockThreshold;
+        case "moneyAndStage":
+            // Requires both money threshold and minimum stage
+            return gameState.money >= upgrade.unlockThreshold &&
+                   gameState.highestStage >= upgrade.unlockStage;
+        case "moneyAndQuantumMask":
+            // Requires both money threshold and Quantum Mask purchased
+            return gameState.money >= upgrade.unlockThreshold &&
+                   gameState.flags.quantumMaskPurchased === true;
+        case "moneyAndQkdLink":
+            // Requires both money threshold and QKD Link purchased
+            return gameState.money >= upgrade.unlockThreshold &&
+                   gameState.flags.qkdLinkPurchased === true;
+        default:
+            // Default is money-based
+            return gameState.money >= upgrade.unlockThreshold;
     }
 }
 
@@ -1352,12 +1424,39 @@ function updateStage() {
     for (let i = STAGES.length - 1; i >= 0; i--) {
         const stage = STAGES[i];
 
-        // Check threshold based on type (money or production)
+        // Check threshold based on type
         let thresholdMet = false;
-        if (stage.thresholdType === "production") {
-            thresholdMet = calculateProductionRate() >= stage.threshold;
-        } else {
-            thresholdMet = gameState.money >= stage.threshold;
+        switch (stage.thresholdType) {
+            case "production":
+                thresholdMet = calculateProductionRate() >= stage.threshold;
+                break;
+            case "autoPosters":
+                thresholdMet = gameState.autoPostersPurchased >= stage.threshold;
+                break;
+            case "autoMaskers":
+                thresholdMet = gameState.autoMaskers >= stage.threshold;
+                break;
+            case "imagePostersAfterStage4":
+                // Stage 5 requires being in Stage 4+ AND having purchased at least 1 image poster
+                thresholdMet = gameState.highestStage >= 4 && gameState.imagePosters >= stage.threshold;
+                break;
+            case "videoAfterStage5WithMutagenic":
+                // Stage 6 requires Stage 5 + Mutagenic Mask + Video Generator
+                thresholdMet = gameState.highestStage >= 5 &&
+                               gameState.maskUpgrade >= 1 &&
+                               gameState.videoPosters >= stage.threshold;
+                break;
+            case "stage6TimeAndMarketValue":
+                // Stage 7 requires 30 seconds in Stage 6 + market value < 45%
+                if (gameState.highestStage >= 6 && gameState.stage6EnteredTime) {
+                    const timeInStage6 = (Date.now() - gameState.stage6EnteredTime) / 1000;
+                    const marketValue = calculateMarketValue();
+                    thresholdMet = timeInStage6 >= stage.threshold && marketValue < 0.45;
+                }
+                break;
+            default:
+                // Default is money-based
+                thresholdMet = gameState.money >= stage.threshold;
         }
 
         if (thresholdMet && newStage < stage.id) {
@@ -1383,6 +1482,11 @@ function updateStage() {
         // Only trigger stage-specific events if this is a new highest stage
         const stage = STAGES.find(s => s.id === newStage);
         if (wasNewHighest && stage) {
+
+            // Record when Stage 6 is entered (for Stage 7 time requirement)
+            if (stage.id === 6 && !gameState.stage6EnteredTime) {
+                gameState.stage6EnteredTime = Date.now();
+            }
 
             // Trigger stage-specific events
             if (stage.id === 3 && !gameState.flags.seenFirstBust) {
@@ -1446,11 +1550,19 @@ function updateDisplay() {
 
 function updateButtonText() {
     const buttonText = document.getElementById('click-text');
-    if (gameState.clickUpgrade1 > 0) {
-        buttonText.textContent = 'POST AI CONTENT';
+    const hexClickBtn = document.getElementById('hex-click-btn');
+
+    let text;
+    if (gameState.clickUpgrade2 > 0) {
+        text = 'POST AI GAME';
+    } else if (gameState.clickUpgrade1 > 0) {
+        text = 'POST AI CONTENT';
     } else {
-        buttonText.textContent = 'POST AI SLOP';
+        text = 'POST AI SLOP';
     }
+
+    buttonText.textContent = text;
+    hexClickBtn.textContent = text.charAt(0) + text.slice(1).toLowerCase(); // "Post AI Game" format
 }
 
 function updateBotIcons() {
@@ -1647,12 +1759,41 @@ function updateUpgradesDisplay() {
     const container = document.getElementById('upgrades-container');
     container.innerHTML = '';
 
+    // Upgrades that become obsolete after Quantum Mask is purchased
+    const obsoleteAfterQuantumMask = ['mask', 'autoMasker', 'maskUpgrade'];
+
+    // Upgrades that become obsolete after Stage 5 (Text is Dead)
+    const obsoleteAfterStage5 = ['autoPoster', 'clickUpgrade1'];
+
     for (const [key, upgrade] of Object.entries(UPGRADES)) {
+        // Hide mask-related upgrades after Quantum Mask is purchased
+        if (gameState.flags.quantumMaskPurchased && obsoleteAfterQuantumMask.includes(key)) {
+            continue;
+        }
+
+        // Hide text-based upgrades after Stage 5
+        if (gameState.currentStage >= 5 && obsoleteAfterStage5.includes(key)) {
+            continue;
+        }
+
+        // Hide AI Image Generator after 2+ Deepfake Studios
+        if (key === 'imagePoster' && gameState.deepfakePosters >= 2) {
+            continue;
+        }
+
+        // Hide AI Video Generator after 2+ Deepfake Studios
+        if (key === 'videoPoster' && gameState.deepfakePosters >= 2) {
+            continue;
+        }
+
         const unlocked = isUpgradeUnlocked(key);
         const canAfford = canAffordUpgrade(key);
         const maxed = isUpgradeMaxed(key);
 
         if (!unlocked) continue;
+
+        // Hide maxed upgrades
+        if (maxed) continue;
 
         const upgradeDiv = document.createElement('div');
         upgradeDiv.className = 'upgrade-item';
@@ -1685,6 +1826,21 @@ function updateStageDisplay() {
     if (stage) {
         // Update the stage text in the header banner
         document.getElementById('stage-text').textContent = stage.description;
+
+        // Update the title (h1) - show stage name starting from stage 2
+        const titleElement = document.querySelector('h1.glitch');
+        if (gameState.currentStage >= 2) {
+            titleElement.textContent = stage.name.toUpperCase();
+            titleElement.setAttribute('data-text', stage.name.toUpperCase());
+        } else {
+            titleElement.textContent = 'ATTENTION SUCKER';
+            titleElement.setAttribute('data-text', 'ATTENTION SUCKER');
+        }
+
+        // Enable hemisphere projection at Stage 7 (The Engagement Apocalypse)
+        if (hexGridRenderer) {
+            hexGridRenderer.setHemisphereMode(gameState.currentStage >= 7);
+        }
     }
 }
 
@@ -1765,6 +1921,32 @@ function purchaseUpgrade(upgradeKey) {
         gameState.autoPostersPurchased++;
     } else if (upgradeKey === 'mask') {
         gameState.masksPurchased++;
+    } else if (upgradeKey === 'videoPoster') {
+        gameState.videoPostersPurchased++;
+    }
+
+    // Quantum Mask special effects: permanent hex grid, zero masks, new detection rules
+    if (upgradeKey === 'quantumMask' && !gameState.flags.quantumMaskPurchased) {
+        gameState.flags.quantumMaskPurchased = true;
+        // Zero out masks and auto-maskers - they don't matter anymore
+        gameState.masks = 0;
+        gameState.autoMaskers = 0;
+        // Force switch to hex grid mode
+        hexGridModeActive = true;
+        switchToHexView();
+        showNotification("QUANTUM MASK ACTIVATED! Bots now exist in superposition. Grid view permanently enabled.");
+    }
+
+    // QKD Link special effects: halves detection rate permanently
+    if (upgradeKey === 'qkdLink' && !gameState.flags.qkdLinkPurchased) {
+        gameState.flags.qkdLinkPurchased = true;
+        showNotification("QKD LINK INSTALLED! Detection rate halved. Your bots are now quantum-secure.");
+    }
+
+    // Trusted Relays special effects: quarters detection rate permanently
+    if (upgradeKey === 'trustedRelays' && !gameState.flags.trustedRelaysPurchased) {
+        gameState.flags.trustedRelaysPurchased = true;
+        showNotification("TRUSTED RELAYS ONLINE! Detection rate quartered. Now... Unhackable.");
     }
 
     gameState.unlockedUpgrades.add(upgradeKey);
@@ -1851,13 +2033,25 @@ function detectAndKillBots(deltaTime) {
 
     if (unmaskedBots.length === 0) return;
 
-    // 1% chance per second per unmasked bot
-    const detectionChance = 0.01 * deltaTime;
+    // Base 1% chance per second per unmasked bot
+    // Detection rate increases by 1.1x in Stage 4+
+    let baseDetectionRate = 0.01;
+    if (gameState.highestStage >= 4) {
+        baseDetectionRate *= 1.1;
+    }
+    const detectionChance = baseDetectionRate * deltaTime;
 
     unmaskedBots.forEach(bot => {
         if (Math.random() < detectionChance) {
             // Bot detected! Turn it into infected (dead) bot
             infectBot(bot);
+
+            // Set first detection flag (unlocks masks)
+            if (!gameState.flags.seenFirstDetection) {
+                gameState.flags.seenFirstDetection = true;
+                showNotification("BOT DETECTED! Masks are now available to protect your bots!");
+                updateUpgradesDisplay(); // Refresh to show new unlocked upgrade
+            }
         }
     });
 }
@@ -1983,11 +2177,35 @@ function infectBot(bot) {
 
 function getTotalBots() {
     return Math.floor(gameState.autoPosters + gameState.autoAutoPosters +
-                     gameState.imagePosters + gameState.videoPosters);
+                     gameState.imagePosters + gameState.videoPosters +
+                     gameState.deepfakePosters);
 }
 
 function shouldUseHexGrid() {
-    return getTotalBots() >= HEX_GRID_THRESHOLD;
+    // Quantum Mask = permanent hex grid mode, never exit
+    if (gameState.flags.quantumMaskPurchased) {
+        hexGridModeActive = true;
+        return true;
+    }
+
+    const totalBots = getTotalBots();
+
+    // Once hex grid mode is active, only exit when below exit threshold
+    if (hexGridModeActive) {
+        if (totalBots < HEX_GRID_EXIT_THRESHOLD) {
+            hexGridModeActive = false;
+            return false;
+        }
+        return true;
+    }
+
+    // Enter hex grid mode when reaching the threshold
+    if (totalBots >= HEX_GRID_THRESHOLD) {
+        hexGridModeActive = true;
+        return true;
+    }
+
+    return false;
 }
 
 function initializeHexGrid() {
@@ -2025,22 +2243,14 @@ function initializeHexGrid() {
 function syncGameStateFromHexGrid() {
     if (!hexGridSimulation) return;
 
-    const counts = hexGridSimulation.countBots();
+    // Get deaths that occurred since last sync and decrement game state
+    const deaths = hexGridSimulation.getAndClearPendingDeaths();
 
-    // Update game state bot counts based on what's actually on the grid
-    // This handles bots that died from infection
-    if (counts.autoPosters < gameState.autoPosters) {
-        gameState.autoPosters = counts.autoPosters;
-    }
-    if (counts.autoAutoPosters < gameState.autoAutoPosters) {
-        gameState.autoAutoPosters = counts.autoAutoPosters;
-    }
-    if (counts.imagePosters < gameState.imagePosters) {
-        gameState.imagePosters = counts.imagePosters;
-    }
-    if (counts.videoPosters < gameState.videoPosters) {
-        gameState.videoPosters = counts.videoPosters;
-    }
+    gameState.autoPosters = Math.max(0, gameState.autoPosters - deaths.autoPosters);
+    gameState.autoAutoPosters = Math.max(0, gameState.autoAutoPosters - deaths.autoAutoPosters);
+    gameState.imagePosters = Math.max(0, gameState.imagePosters - deaths.imagePosters);
+    gameState.videoPosters = Math.max(0, gameState.videoPosters - deaths.videoPosters);
+    gameState.deepfakePosters = Math.max(0, gameState.deepfakePosters - deaths.deepfakePosters);
 }
 
 function updateHexGrid(deltaTime) {
@@ -2051,10 +2261,28 @@ function updateHexGrid(deltaTime) {
     // Sync game state to hex grid (adds new bots, updates masks)
     hexGridSimulation.syncWithGameState(gameState);
 
-    // Update grid size if needed
+    // Apply any bot replacements (when grid is full, higher-tier bots replace lower-tier)
+    const replacements = hexGridSimulation.getAndClearReplacements();
+    if (replacements.autoPosters > 0) {
+        gameState.autoPosters = Math.max(0, gameState.autoPosters - replacements.autoPosters);
+    }
+    if (replacements.autoAutoPosters > 0) {
+        gameState.autoAutoPosters = Math.max(0, gameState.autoAutoPosters - replacements.autoAutoPosters);
+    }
+    if (replacements.imagePosters > 0) {
+        gameState.imagePosters = Math.max(0, gameState.imagePosters - replacements.imagePosters);
+    }
+    if (replacements.videoPosters > 0) {
+        gameState.videoPosters = Math.max(0, gameState.videoPosters - replacements.videoPosters);
+    }
+    if (replacements.deepfakePosters > 0) {
+        gameState.deepfakePosters = Math.max(0, gameState.deepfakePosters - replacements.deepfakePosters);
+    }
+
+    // Update grid size if needed (only grow, never shrink)
     const totalBots = getTotalBots();
     const requiredRings = Math.min(Math.floor(Math.sqrt(totalBots)), 64);
-    if (requiredRings !== hexGridSimulation.rings) {
+    if (requiredRings > hexGridSimulation.rings) {
         hexGridSimulation.resize(requiredRings);
         hexGridRenderer.updateGridSize();
     }
@@ -2062,7 +2290,11 @@ function updateHexGrid(deltaTime) {
     // Run simulation step at regular intervals
     if (now - lastHexUpdateTime >= HEX_UPDATE_INTERVAL) {
         const postsPerSecond = calculateProductionRate();
-        hexGridSimulation.update(postsPerSecond);
+        const quantumMaskActive = gameState.flags.quantumMaskPurchased;
+        const qkdLinkActive = gameState.flags.qkdLinkPurchased;
+        const trustedRelaysActive = gameState.flags.trustedRelaysPurchased;
+        hexGridSimulation.update(postsPerSecond, quantumMaskActive, qkdLinkActive, trustedRelaysActive);
+        syncGameStateFromHexGrid(); // Apply deaths to game state
         lastHexUpdateTime = now;
     }
 
@@ -2074,13 +2306,15 @@ function switchToHexView() {
     const canvas = document.getElementById('hex-grid-canvas');
     const botsContainer = document.getElementById('bots-container');
     const clickButton = document.getElementById('click-area');
+    const hexClickBtn = document.getElementById('hex-click-btn');
 
-    // Hide bubble view
+    // Hide bubble view elements
     botsContainer.style.display = 'none';
     clickButton.style.display = 'none';
 
-    // Show hex grid
+    // Show hex grid and hex click button
     canvas.classList.add('active');
+    hexClickBtn.classList.add('active');
 
     // Initialize hex grid if not already done
     if (!hexGridSimulation) {
@@ -2092,13 +2326,15 @@ function switchToBubbleView() {
     const canvas = document.getElementById('hex-grid-canvas');
     const botsContainer = document.getElementById('bots-container');
     const clickButton = document.getElementById('click-area');
+    const hexClickBtn = document.getElementById('hex-click-btn');
 
     // Show bubble view
     botsContainer.style.display = 'block';
     clickButton.style.display = 'flex';
 
-    // Hide hex grid
+    // Hide hex grid and hex click button
     canvas.classList.remove('active');
+    hexClickBtn.classList.remove('active');
 }
 
 function updateViewMode() {
@@ -2135,6 +2371,11 @@ function gameLoop() {
         gameState.autoPosters += gameState.autoAutoPosters * 0.1 * deltaTime;
     }
 
+    // Deepfake Studios spawn new Video Generators (1 per second each)
+    if (gameState.deepfakePosters > 0) {
+        gameState.videoPosters += gameState.deepfakePosters * 1 * deltaTime;
+    }
+
     // Auto-Maskers create masks
     if (gameState.autoMaskers > 0) {
         gameState.masks += gameState.autoMaskers * deltaTime;
@@ -2162,6 +2403,9 @@ function gameLoop() {
 
     // Update world state
     updateWorldState();
+
+    // Check for stage progression
+    updateStage();
 
     // Update display
     updateDisplay();
@@ -2389,8 +2633,11 @@ function formatMoney(num) {
 // ============= EVENT LISTENERS =============
 
 function initializeEventListeners() {
-    // Click button
+    // Click button (bubble view)
     document.getElementById('click-area').addEventListener('click', handleClick);
+
+    // Click button (hex grid view)
+    document.getElementById('hex-click-btn').addEventListener('click', handleClick);
 
     // Mobile: Make main-area clickable on mobile devices
     const mainArea = document.querySelector('.main-area');
