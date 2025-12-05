@@ -2227,6 +2227,11 @@ function initializeHexGrid() {
     hexGridSimulation = new HexGridSimulation(rings);
     hexGridRenderer = new HexGridRenderer(canvas, hexGridSimulation);
 
+    // Enable hemisphere projection if at Stage 7+
+    if (gameState.currentStage >= 7) {
+        hexGridRenderer.setHemisphereMode(true);
+    }
+
     // Sync with current game state
     hexGridSimulation.syncWithGameState(gameState);
 
